@@ -1,0 +1,10 @@
+<?jelly escape-by-default='true'?>
+<!-- Copyright (c) 2018, NVIDIA CORPORATION. -->
+
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+   <f:entry field="environment">
+      <f:textarea />
+   </f:entry>
+
+</j:jelly>
