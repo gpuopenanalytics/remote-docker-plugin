@@ -120,10 +120,8 @@ public class DockerLauncher extends Launcher {
                 .add("-v", workspaceSrc + ":" + workspacePath)
                 .add("-v", tmpSrc + ":" + tmpDest); //Jenkins puts scripts here
 
-        dockerConfiguration.getConfigItemList().forEach(
-                item -> item.addArgs(args, build));
-
         dockerConfiguration.addArgs(args, build);
+
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         int status = executeCommand(launcher, args)

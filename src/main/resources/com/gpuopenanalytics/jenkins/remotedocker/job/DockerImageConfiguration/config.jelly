@@ -15,26 +15,31 @@
   ~ limitations under the License.
   -->
 
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
-         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core"
+         xmlns:f="/lib/form">
 
+    <f:section title="Image">
     <f:entry title="Docker Image" field="image">
         <f:textbox/>
     </f:entry>
+    </f:section>
 
-    <f:entry title="Force pull" field="forcePull">
-        <f:checkbox/>
-    </f:entry>
-
-    <f:entry title="Advanced settings">
-        <f:repeatableHeteroProperty field="configItemList"
-                                    addCaption="Add" deleteCaption="Delete" hasHeader="true" oneEach="true"/>
-    </f:entry>
-
-    <!--<f:entry title="Manage volumes">-->
-    <!--<f:repeatableHeteroProperty field="multipleHints"-->
-    <!--addCaption="Add" deleteCaption="Delete" hasHeader="true" oneEach="false" />-->
-    <!--</f:entry>-->
+    <f:section title="Advanced Settings">
+        <f:advanced>
+            <f:entry title="Force pull" field="forcePull">
+                <f:checkbox/>
+            </f:entry>
+            <f:entry title="Additional Settings">
+                <f:repeatableHeteroProperty field="configItemList"
+                                            addCaption="Add" deleteCaption="Delete" hasHeader="true" oneEach="true"/>
+            </f:entry>
+            <f:entry title="Manage Volumes">
+                <f:repeatableProperty field="volumes" minimum="0" header="Volume" var="item" add="Add Volume">
+                    <f:repeatableDeleteButton/>
+                </f:repeatableProperty>
+            </f:entry>
+        </f:advanced>
+    </f:section>
 
 </j:jelly>
 

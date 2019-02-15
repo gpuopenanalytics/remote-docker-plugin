@@ -17,6 +17,7 @@
 package com.gpuopenanalytics.jenkins.remotedocker.job;
 
 import com.gpuopenanalytics.jenkins.remotedocker.config.ConfigItem;
+import com.gpuopenanalytics.jenkins.remotedocker.config.VolumeConfiguration;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
@@ -37,9 +38,10 @@ public class DockerImageConfiguration extends DockerConfiguration {
 
     @DataBoundConstructor
     public DockerImageConfiguration(List<ConfigItem> configItemList,
+                                    List<VolumeConfiguration> volumes,
                                     String image,
                                     boolean forcePull) {
-        super(configItemList);
+        super(configItemList, volumes);
         this.image = image;
         this.forcePull = forcePull;
     }
@@ -61,6 +63,9 @@ public class DockerImageConfiguration extends DockerConfiguration {
         for (ConfigItem item : getConfigItemList()) {
             item.validate();
         }
+        for(VolumeConfiguration volume:getVolumes()){
+            volume.validate();
+        }
     }
 
     @Override
@@ -68,6 +73,11 @@ public class DockerImageConfiguration extends DockerConfiguration {
         if (isForcePull()) {
             args.add("--pull");
         }
+        getConfigItemList().stream()
+                .forEach(item -> item.addArgs(args, build));
+        getVolumes().stream()
+                .forEach(item -> item.addArgs(args, build));
+
         args.add(DockerConfiguration.resolveVariables(
                 build.getBuildVariableResolver(), getImage()));
     }

@@ -18,6 +18,7 @@ package com.gpuopenanalytics.jenkins.remotedocker.job;
 
 import com.google.common.collect.Lists;
 import com.gpuopenanalytics.jenkins.remotedocker.config.ConfigItem;
+import com.gpuopenanalytics.jenkins.remotedocker.config.VolumeConfiguration;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -38,13 +39,20 @@ public abstract class DockerConfiguration extends AbstractDescribableImpl<Docker
             "\\$(\\w+)|\\$\\{([^}]+)}");
 
     protected List<ConfigItem> configItemList;
+    protected List<VolumeConfiguration> volumes;
 
-    public DockerConfiguration(List<ConfigItem> configItemList) {
+    public DockerConfiguration(List<ConfigItem> configItemList,
+                               List<VolumeConfiguration> volumes) {
         this.configItemList = configItemList == null ? Lists.newArrayList() : configItemList;
+        this.volumes = volumes == null ? Lists.newArrayList() : volumes;
     }
 
     public List<ConfigItem> getConfigItemList() {
         return configItemList;
+    }
+
+    public List<VolumeConfiguration> getVolumes() {
+        return volumes;
     }
 
     /**
@@ -57,6 +65,7 @@ public abstract class DockerConfiguration extends AbstractDescribableImpl<Docker
 
     /**
      * Build up the <code>docker create</code> argument list
+     *
      * @param args
      * @param build
      */
@@ -85,6 +94,11 @@ public abstract class DockerConfiguration extends AbstractDescribableImpl<Docker
         }
         m.appendTail(sb);
         return sb.toString();
+    }
+
+    public static boolean hasVariablesToResolve(String s) {
+        Matcher m = VAR_REGEX.matcher(s);
+        return m.find();
     }
 
 }

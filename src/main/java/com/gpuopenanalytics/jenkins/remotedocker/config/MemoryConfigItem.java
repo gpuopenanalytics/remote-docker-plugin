@@ -43,11 +43,13 @@ public class MemoryConfigItem extends ConfigItem {
 
     @Override
     public void validate() throws Descriptor.FormException {
-        if (!VALIDATION_PATTERN.matcher(memory).matches()) {
-            throw new Descriptor.FormException("Memory value is not valid",
-                                               "memory");
+        if (!DockerConfiguration.hasVariablesToResolve(memory)) {
+            if (!VALIDATION_PATTERN.matcher(memory).matches()) {
+                throw new Descriptor.FormException("Memory value is not valid",
+                                                   "memory");
+            }
+            //TODO Minimum value
         }
-        //TODO Minimum value
     }
 
     @Override

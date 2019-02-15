@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class NvidiaDriverAbilityConfigItem extends ConfigItem {
 
-    private static final String ENV_VAR_NAME = "NVIDIA_VISIBLE_DEVICES";
+    private static final String ENV_VAR_NAME = "NVIDIA_DRIVER_CAPABILITIES";
 
     private boolean compute;
     private boolean compat32;
@@ -90,7 +90,7 @@ public class NvidiaDriverAbilityConfigItem extends ConfigItem {
             abilities.add("graphics");
         }
         if (utility) {
-            abilities.add("compute");
+            abilities.add("utility");
         }
         if (video) {
             abilities.add("video");
@@ -106,7 +106,7 @@ public class NvidiaDriverAbilityConfigItem extends ConfigItem {
 
         @Override
         public String getDisplayName() {
-            return "NVIDIA Driver Settings";
+            return "NVIDIA Driver Capabilities";
         }
     }
 
