@@ -103,9 +103,8 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
     @Override
     public Environment setUp(AbstractBuild build,
                              Launcher launcher,
-                             BuildListener listener) throws IOException, InterruptedException {
-        String workspacePath = build.getWorkspace().getRemote();
-        ((DockerLauncher) launcher).launchContainer(workspacePath);
+                             BuildListener listener) throws IOException, InterruptedException { ;
+        ((DockerLauncher) launcher).launchContainer(build);
         return new DockerEnvironment((DockerLauncher) launcher);
     }
 

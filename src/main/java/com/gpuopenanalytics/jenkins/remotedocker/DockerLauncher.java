@@ -67,12 +67,7 @@ public class DockerLauncher extends Launcher {
 
     @Override
     public Proc launch(@Nonnull ProcStarter starter) throws IOException {
-        try {
-            return dockerExec(this.delegate, this.listener, containerId,
-                              starter);
-        } catch (InterruptedException e) {
-            throw new IOException(e);
-        }
+        return dockerExec(starter, true);
     }
 
     @Override
@@ -92,12 +87,12 @@ public class DockerLauncher extends Launcher {
      * Spin up the container mounting the specified path as a volume mount. This
      * method blocks until the container is started.
      *
-     * @param workspacePath
-     * @return
+     * @param build
      * @throws IOException
      * @throws InterruptedException
      */
-    public String launchContainer(String workspacePath) throws IOException, InterruptedException {
+    public void launchContainer(AbstractBuild build) throws IOException, InterruptedException {
+        String workspacePath = build.getWorkspace().getRemote();
         //Fully resolve the source workspace
         String workspaceSrc = Paths.get(workspacePath)
                 .toRealPath()
@@ -113,6 +108,7 @@ public class DockerLauncher extends Launcher {
                 .toString();
 
         Launcher launcher = delegate;
+        //TODO Set name? Maybe with build.toString().replaceAll("^\\w", "_")
         ArgumentListBuilder args = new ArgumentListBuilder()
                 .add("run", "-t", "-d")
                 .add("--env", "TMPDIR=" + workspacePath + ".tmp")
@@ -120,7 +116,7 @@ public class DockerLauncher extends Launcher {
                 .add("-v", workspaceSrc + ":" + workspacePath)
                 .add("-v", tmpSrc + ":" + tmpDest); //Jenkins puts scripts here
 
-        dockerConfiguration.addArgs(args, build);
+        dockerConfiguration.addCreateArgs(args, build);
 
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -136,7 +132,8 @@ public class DockerLauncher extends Launcher {
             throw new IOException("Failed to start docker image");
         }
         this.containerId = containerId;
-        return containerId;
+
+        dockerConfiguration.postCreate(this, build);
     }
 
     /**
@@ -164,18 +161,29 @@ public class DockerLauncher extends Launcher {
     /**
      * Invoke <code>docker exec</code> on the already created container.
      *
-     * @param launcher
-     * @param listener
-     * @param containerId
-     * @param starter
+     * @param args
+     * @param addRunArgs
      * @return
      * @throws IOException
-     * @throws InterruptedException
      */
-    public Proc dockerExec(Launcher launcher,
-                           TaskListener listener,
-                           String containerId,
-                           Launcher.ProcStarter starter) throws IOException, InterruptedException {
+    public Proc dockerExec(ArgumentListBuilder args,
+                           boolean addRunArgs) throws IOException {
+        Launcher.ProcStarter starter = this.new ProcStarter();
+        starter.stderr(listener.getLogger());
+        starter.cmds(args);
+        return dockerExec(starter, addRunArgs);
+    }
+
+    /**
+     * Invoke <code>docker exec</code> on the already created container.
+     *
+     * @param starter
+     * @param addRunArgs
+     * @return
+     * @throws IOException
+     */
+    public Proc dockerExec(Launcher.ProcStarter starter,
+                           boolean addRunArgs) throws IOException {
         if (containerId == null) {
             throw new IllegalStateException(
                     "The container has not been launched. Call launcherContainer() first.");
@@ -185,6 +193,10 @@ public class DockerLauncher extends Launcher {
         if (starter.pwd() != null) {
             args.add("--workdir", starter.pwd().getRemote());
         }
+        if (addRunArgs) {
+            dockerConfiguration.addRunArgs(args, build);
+        }
+
         args.add(containerId);
 
         args.add("env").add(starter.envs());
@@ -195,10 +207,13 @@ public class DockerLauncher extends Launcher {
             boolean masked = originalMask == null ? false : i < originalMask.length ? originalMask[i] : false;
             args.add(originalCmds.get(i), masked);
         }
-        Launcher.ProcStarter procStarter = executeCommand(launcher, args);
+        Launcher.ProcStarter procStarter = executeCommand(delegate, args);
 
         if (starter.stdout() != null) {
             procStarter.stdout(starter.stdout());
+        }
+        if (starter.stderr() != null) {
+            procStarter.stderr(starter.stderr());
         }
 
         return procStarter.start();
@@ -206,6 +221,7 @@ public class DockerLauncher extends Launcher {
 
     /**
      * Remove the container
+     *
      * @throws IOException
      * @throws InterruptedException
      */

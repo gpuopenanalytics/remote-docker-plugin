@@ -48,7 +48,7 @@ public class EnvironmentVariableConfigItem extends ConfigItem {
     }
 
     @Override
-    public void addArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
         try {
             Properties props = parsePropertiesString(environment);
             for (String key : props.stringPropertyNames()) {

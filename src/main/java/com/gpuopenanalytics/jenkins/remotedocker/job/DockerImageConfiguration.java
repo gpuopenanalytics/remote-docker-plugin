@@ -16,6 +16,7 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.job;
 
+import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.config.ConfigItem;
 import com.gpuopenanalytics.jenkins.remotedocker.config.VolumeConfiguration;
 import hudson.Extension;
@@ -26,6 +27,7 @@ import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -69,17 +71,28 @@ public class DockerImageConfiguration extends DockerConfiguration {
     }
 
     @Override
-    public void addArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
         if (isForcePull()) {
             args.add("--pull");
         }
         getConfigItemList().stream()
-                .forEach(item -> item.addArgs(args, build));
+                .forEach(item -> item.addCreateArgs(args, build));
         getVolumes().stream()
                 .forEach(item -> item.addArgs(args, build));
 
         args.add(DockerConfiguration.resolveVariables(
                 build.getBuildVariableResolver(), getImage()));
+    }
+
+    @Override
+    public void postCreate(DockerLauncher launcher,
+                           AbstractBuild build) throws IOException, InterruptedException {
+        super.postCreate(launcher, build);
+    }
+
+    @Override
+    public void addRunArgs(ArgumentListBuilder args, AbstractBuild build) {
+        super.addRunArgs(args, build);
     }
 
     @Extension

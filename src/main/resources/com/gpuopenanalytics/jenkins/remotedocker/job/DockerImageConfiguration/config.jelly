@@ -19,13 +19,13 @@
          xmlns:f="/lib/form">
 
     <f:section title="Image">
-    <f:entry title="Docker Image" field="image">
-        <f:textbox/>
-    </f:entry>
+        <f:entry title="Docker Image" field="image">
+            <f:textbox/>
+        </f:entry>
     </f:section>
 
-    <f:section title="Advanced Settings">
-        <f:advanced>
+    <f:advanced>
+        <f:section title="Advanced Settings">
             <f:entry title="Force pull" field="forcePull">
                 <f:checkbox/>
             </f:entry>
@@ -38,8 +38,8 @@
                     <f:repeatableDeleteButton/>
                 </f:repeatableProperty>
             </f:entry>
-        </f:advanced>
-    </f:section>
+        </f:section>
+    </f:advanced>
 
 </j:jelly>
 

@@ -1,0 +1,85 @@
+<?jelly escape-by-default='true'?>
+<!--
+  ~ Copyright (c) 2019, NVIDIA CORPORATION.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+
+
+    <f:radioBlock name="user" value="jenkins" title="jenkins - user with UID/GID of 10000 (default)" inline="true"
+                  checked="${instance.getUsername()=='jenkins' || instance.getUsername()==null}" default="true">
+        <input name="jenkins_username" type="hidden" value="jenkins"/>
+        <input name="jenkins_uid" type="hidden" value="10000"/>
+        <input name="jenkins_gid" type="hidden" value="10000"/>
+        <input name="jenkins_custom" type="hidden" value="false"/>
+    </f:radioBlock>
+    <f:radioBlock name="user" value="root" title="root - user with UID/GID of 0" inline="true"
+                  checked="${instance.getUsername()=='root'}">
+        <input name="root_username" type="hidden" value="root"/>
+        <input name="root_uid" type="hidden" value="0"/>
+        <input name="root_gid" type="hidden" value="0"/>
+        <input name="root_custom" type="hidden" value="false"/>
+    </f:radioBlock>
+    <f:radioBlock name="user" value="existing" title="existing - a user that exists in the container" inline="true"
+                  checked="${instance.isExisting()}">
+        <f:entry title="Username (Required)" field="existing_username">
+            <f:textbox field="username" name="existing_username"/>
+        </f:entry>
+        <input name="existing_uid" type="hidden" value=""/>
+        <input name="existing_gid" type="hidden" value=""/>
+        <input name="existing_custom" type="hidden" value="false"/>
+    </f:radioBlock>
+    <f:radioBlock name="user" value="custom" title="custom - user will be added to the container" inline="true"
+                  checked="${instance.isCustom()}">
+        <f:entry title="Username (Required)" field="username">
+            <f:textbox field="username" name="custom_username"/>
+        </f:entry>
+        <f:entry title="UID (Required)" field="uid">
+            <f:textbox field="uid" name="custom_uid"/>
+        </f:entry>
+        <f:entry title="GID (Optional)" field="gid">
+            <f:textbox name="custom_gid"/>
+        </f:entry>
+        <input field="gid" name="custom_custom" type="hidden" value="true"/>
+    </f:radioBlock>
+
+    <!--<j:if test="${instance.getUserSetting()!=null}">-->
+    <!--<f:radioBlock name="userSetting" value="NV-PLUGIN-USER-DEFAULT"-->
+    <!--title="jenkins - user with UID/GID of 10000 (default)" inline="true"-->
+    <!--checked="${instance.isChecked('NV-PLUGIN-USER-DEFAULT')}"/>-->
+    <!--</j:if>-->
+    <!--<f:radioBlock name="userSetting" value="NV-PLUGIN-USER-ROOT" title="root - user with UID/GID of 0" inline="true"-->
+    <!--checked="${instance.isChecked('NV-PLUGIN-USER-ROOT')}"/>-->
+    <!--<f:radioBlock name="userSetting" value="NV-PLUGIN-USER-EXISTING"-->
+    <!--title="existing - user already defined in container" inline="true"-->
+    <!--checked="${instance.isChecked('NV-PLUGIN-USER-EXISTING')}">-->
+    <!--<f:entry title="Username (Required)" field="userExisting">-->
+    <!--<f:textbox name="userExisting"/>-->
+    <!--</f:entry>-->
+    <!--</f:radioBlock>-->
+    <!--<f:radioBlock name="userSetting" value="NV-PLUGIN-USER-CUSTOM" title="custom - user created in container"-->
+    <!--inline="true" checked="${instance.isChecked('NV-PLUGIN-USER-CUSTOM')}">-->
+    <!--<f:entry title="Username (Required)" field="userName">-->
+    <!--<f:textbox name="userName"/>-->
+    <!--</f:entry>-->
+    <!--<f:entry title="UID (Required)" field="userId">-->
+    <!--<f:textbox name="userId"/>-->
+    <!--</f:entry>-->
+    <!--<f:entry title="GID (Optional)" field="userGroupId">-->
+    <!--<f:textbox name="userGroupId"/>-->
+    <!--</f:entry>-->
+    <!--</f:radioBlock>-->
+
+</j:jelly>

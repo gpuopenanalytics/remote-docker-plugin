@@ -49,7 +49,7 @@ public class DockerRuntimeConfigItem extends CustomConfigItem {
     }
 
     @Override
-    public void addArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
         args.addKeyValuePair("", "--runtime", getResolvedValue(build), false);
     }
 

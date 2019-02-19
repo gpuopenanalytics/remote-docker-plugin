@@ -78,7 +78,7 @@ public class NvidiaDriverAbilityConfigItem extends ConfigItem {
     }
 
     @Override
-    public void addArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
         List<String> abilities = Lists.newArrayList();
         if (compute) {
             abilities.add("compute");

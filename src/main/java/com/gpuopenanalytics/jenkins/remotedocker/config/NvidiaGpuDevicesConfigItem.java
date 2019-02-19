@@ -55,7 +55,7 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
     }
 
     @Override
-    public void addArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
         args.add("-e");
         args.addKeyValuePair("", ENV_VAR_NAME, getResolvedValue(build), false);
     }

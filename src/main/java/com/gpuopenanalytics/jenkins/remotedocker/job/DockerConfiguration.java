@@ -17,6 +17,7 @@
 package com.gpuopenanalytics.jenkins.remotedocker.job;
 
 import com.google.common.collect.Lists;
+import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.config.ConfigItem;
 import com.gpuopenanalytics.jenkins.remotedocker.config.VolumeConfiguration;
 import hudson.model.AbstractBuild;
@@ -25,6 +26,7 @@ import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.VariableResolver;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -69,7 +71,33 @@ public abstract class DockerConfiguration extends AbstractDescribableImpl<Docker
      * @param args
      * @param build
      */
-    public abstract void addArgs(ArgumentListBuilder args, AbstractBuild build);
+    public abstract void addCreateArgs(ArgumentListBuilder args,
+                                       AbstractBuild build);
+
+    /**
+     * Runs after the container is running, but before the build executes
+     *
+     * @param launcher
+     * @param build
+     */
+    public void postCreate(DockerLauncher launcher,
+                           AbstractBuild build) throws IOException, InterruptedException {
+        for (ConfigItem item : configItemList) {
+            item.postCreate(launcher, build);
+        }
+    }
+
+    /**
+     * Add the arguments to <code>docker exec</code> command that actually
+     * executes the build
+     *
+     * @param args
+     */
+    public void addRunArgs(ArgumentListBuilder args, AbstractBuild build) {
+        for (ConfigItem item : configItemList) {
+            item.addRunArgs(args, build);
+        }
+    }
 
     /**
      * Finds <code>$VAR</code> or <code>${VAR}</code> in the specified string

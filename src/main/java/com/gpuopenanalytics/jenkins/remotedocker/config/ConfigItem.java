@@ -16,11 +16,14 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
+import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
 import hudson.ExtensionPoint;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
+
+import java.io.IOException;
 
 /**
  * Represents a configuration to the <code>docker create</code> command.
@@ -40,6 +43,26 @@ public abstract class ConfigItem extends AbstractDescribableImpl<ConfigItem> imp
      *
      * @param args
      */
-    public abstract void addArgs(ArgumentListBuilder args, AbstractBuild build);
+    public abstract void addCreateArgs(ArgumentListBuilder args,
+                                       AbstractBuild build);
+
+    /**
+     * Runs after the container is running, but before the build executes
+     * @param launcher
+     * @param build
+     */
+    public void postCreate(DockerLauncher launcher, AbstractBuild build) throws IOException, InterruptedException {
+
+    }
+
+    /**
+     * Add the arguments to <code>docker exec</code> command that actually
+     * executes the build
+     *
+     * @param args
+     */
+    public void addRunArgs(ArgumentListBuilder args, AbstractBuild build) {
+        //No-op, sub-classes should override
+    }
 
 }
