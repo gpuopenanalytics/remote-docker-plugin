@@ -28,8 +28,7 @@ import java.util.List;
 public class DockerConfigurationDescriptor extends Descriptor<DockerConfiguration> {
 
     public static List<DockerConfigurationDescriptor> all() {
-        return Jenkins.getInstance().getDescriptorList(
-                DockerConfiguration.class);
+        return Jenkins.get().getDescriptorList(DockerConfiguration.class);
     }
 
 }

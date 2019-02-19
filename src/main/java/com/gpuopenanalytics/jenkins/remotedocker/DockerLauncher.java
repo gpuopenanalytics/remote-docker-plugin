@@ -17,6 +17,7 @@
 package com.gpuopenanalytics.jenkins.remotedocker;
 
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfiguration;
+import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Proc;
@@ -92,6 +93,7 @@ public class DockerLauncher extends Launcher {
      * @throws InterruptedException
      */
     public void launchContainer(AbstractBuild build) throws IOException, InterruptedException {
+        EnvVars environment = build.getEnvironment(listener);
         String workspacePath = build.getWorkspace().getRemote();
         //Fully resolve the source workspace
         String workspaceSrc = Paths.get(workspacePath)
@@ -118,6 +120,8 @@ public class DockerLauncher extends Launcher {
 
         dockerConfiguration.addCreateArgs(args, build);
 
+        //Start a shell so the container blocks
+        args.add("sh");
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         int status = executeCommand(launcher, args)
@@ -211,9 +215,13 @@ public class DockerLauncher extends Launcher {
 
         if (starter.stdout() != null) {
             procStarter.stdout(starter.stdout());
+        } else {
+            procStarter.stdout(listener.getLogger());
         }
         if (starter.stderr() != null) {
             procStarter.stderr(starter.stderr());
+        } else {
+            procStarter.stderr(listener.getLogger());
         }
 
         return procStarter.start();

@@ -22,6 +22,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.QuotedStringTokenizer;
+import hudson.util.VariableResolver;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.List;
@@ -47,10 +48,10 @@ public class ExtraDockerArgsConfigItem extends ConfigItem {
 
     @Override
     public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
+        VariableResolver<String> resolver = build.getBuildVariableResolver();
         List<String> newArgs = Stream.of(
                 QuotedStringTokenizer.tokenize(extraArgs))
-                .map(s -> Utils.resolveVariables(
-                        build.getBuildVariableResolver(), s))
+                .map(s -> Utils.resolveVariables(resolver, s))
                 .collect(Collectors.toList());
         args.add(newArgs);
     }
