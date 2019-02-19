@@ -16,8 +16,52 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
-public class ExtraDockerArgsConfigItem {
+import com.gpuopenanalytics.jenkins.remotedocker.Utils;
+import hudson.Extension;
+import hudson.model.AbstractBuild;
+import hudson.model.Descriptor;
+import hudson.util.ArgumentListBuilder;
+import hudson.util.QuotedStringTokenizer;
+import org.kohsuke.stapler.DataBoundConstructor;
 
-    //QuotedStringTokenizer
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+/**
+ * Allows user to add arbitrary docker arguments to <code>docker run</code>
+ */
+public class ExtraDockerArgsConfigItem extends ConfigItem {
+
+    private String extraArgs;
+
+    @DataBoundConstructor
+    public ExtraDockerArgsConfigItem(String extraArgs) {
+        this.extraArgs = extraArgs;
+    }
+
+    @Override
+    public void validate() throws Descriptor.FormException {
+
+    }
+
+    @Override
+    public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
+        List<String> newArgs = Stream.of(
+                QuotedStringTokenizer.tokenize(extraArgs))
+                .map(s -> Utils.resolveVariables(
+                        build.getBuildVariableResolver(), s))
+                .collect(Collectors.toList());
+        args.add(newArgs);
+    }
+
+    @Extension
+    public static class DescriptorImpl extends Descriptor<ConfigItem> {
+
+        @Override
+        public String getDisplayName() {
+            return "Extra docker arguments";
+        }
+    }
 
 }

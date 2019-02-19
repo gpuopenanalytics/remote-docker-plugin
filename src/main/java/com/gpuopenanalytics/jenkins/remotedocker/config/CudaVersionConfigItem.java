@@ -17,6 +17,7 @@
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
 import com.google.common.collect.ImmutableList;
+import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
@@ -57,7 +58,8 @@ public class CudaVersionConfigItem extends ConfigItem {
 
     @Override
     public void validate() throws Descriptor.FormException {
-        if (!CUDA_VERSIONS.contains(nvidiaCuda)) {
+        if (!Utils.hasVariablesToResolve(nvidiaCuda)
+                && !CUDA_VERSIONS.contains(nvidiaCuda)) {
             throw new Descriptor.FormException(
                     "Invalid CUDA version: " + nvidiaCuda, "nvidiaCuda");
         }
@@ -66,7 +68,8 @@ public class CudaVersionConfigItem extends ConfigItem {
     @Override
     public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
         args.add("-e");
-        args.addKeyValuePair("", ENV_VAR_NAME, nvidiaCuda, false);
+        String cuda = Utils.resolveVariables(build, nvidiaCuda);
+        args.addKeyValuePair("", ENV_VAR_NAME, cuda, false);
     }
 
     @Extension

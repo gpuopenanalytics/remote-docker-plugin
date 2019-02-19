@@ -16,6 +16,7 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
+import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
 import hudson.ExtensionPoint;
 import hudson.model.AbstractBuild;
@@ -60,9 +61,11 @@ public class VolumeConfiguration extends AbstractDescribableImpl<VolumeConfigura
         return readOnly;
     }
 
-    private String getDockerArgument() {
+    private String getDockerArgument(AbstractBuild build) {
         String readType = readOnly ? READ_ONLY_FLAG : READ_WRITE_FLAG;
-        return hostPath + ":" + destPath + ":" + readType;
+        return String.join(":", Utils.resolveVariables(build, hostPath),
+                           Utils.resolveVariables(build, destPath),
+                           readType);
     }
 
     public void validate() throws Descriptor.FormException {
@@ -78,7 +81,7 @@ public class VolumeConfiguration extends AbstractDescribableImpl<VolumeConfigura
     }
 
     public void addArgs(ArgumentListBuilder args, AbstractBuild build) {
-        args.add("-v", getDockerArgument());
+        args.add("-v", getDockerArgument(build));
     }
 
     @Extension

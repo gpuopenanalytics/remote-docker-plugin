@@ -37,9 +37,6 @@ import java.util.regex.Pattern;
  */
 public abstract class DockerConfiguration extends AbstractDescribableImpl<DockerConfiguration> {
 
-    private static final Pattern VAR_REGEX = Pattern.compile(
-            "\\$(\\w+)|\\$\\{([^}]+)}");
-
     protected List<ConfigItem> configItemList;
     protected List<VolumeConfiguration> volumes;
 
@@ -99,34 +96,5 @@ public abstract class DockerConfiguration extends AbstractDescribableImpl<Docker
         }
     }
 
-    /**
-     * Finds <code>$VAR</code> or <code>${VAR}</code> in the specified string
-     * that exist in the resolver and resolves them. If the variable is not
-     * resolved, it is left unchanged.
-     *
-     * @param resolver
-     * @param s
-     * @return
-     */
-    public static String resolveVariables(VariableResolver<String> resolver,
-                                          String s) {
-        //Matcher requires StringBuffer :(
-        StringBuffer sb = new StringBuffer();
-        Matcher m = VAR_REGEX.matcher(s);
-        while (m.find()) {
-            String varName = java.util.Optional.ofNullable(m.group(1))
-                    .orElseGet(() -> m.group(2));
-            Optional<String> newValue = Optional.ofNullable(
-                    resolver.resolve(varName));
-            m.appendReplacement(sb, newValue.orElseGet(() -> "\\$" + varName));
-        }
-        m.appendTail(sb);
-        return sb.toString();
-    }
-
-    public static boolean hasVariablesToResolve(String s) {
-        Matcher m = VAR_REGEX.matcher(s);
-        return m.find();
-    }
 
 }

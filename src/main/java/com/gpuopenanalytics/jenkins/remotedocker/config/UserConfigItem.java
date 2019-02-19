@@ -17,7 +17,7 @@
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
 import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
-import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfiguration;
+import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
@@ -111,10 +111,10 @@ public class UserConfigItem extends ConfigItem {
                            AbstractBuild build) throws IOException, InterruptedException {
         if (!isExisting() && !"root".equals(username)) {
             VariableResolver r = build.getBuildVariableResolver();
-            String gid = DockerConfiguration.resolveVariables(r, this.gid);
-            String uid = DockerConfiguration.resolveVariables(r, this.uid);
-            String username = DockerConfiguration.resolveVariables(r,
-                                                                   this.username);
+            String gid = Utils.resolveVariables(r, this.gid);
+            String uid = Utils.resolveVariables(r, this.uid);
+            String username = Utils.resolveVariables(r,
+                                                     this.username);
 
             ArgumentListBuilder groupAddArgs = new ArgumentListBuilder();
             groupAddArgs.add("groupadd", "-g", gid, username);
@@ -134,7 +134,7 @@ public class UserConfigItem extends ConfigItem {
 
     @Override
     public void addRunArgs(ArgumentListBuilder args, AbstractBuild build) {
-        args.add("--user", DockerConfiguration.resolveVariables(
+        args.add("--user", Utils.resolveVariables(
                 build.getBuildVariableResolver(), username));
     }
 

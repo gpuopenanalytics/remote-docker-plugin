@@ -17,6 +17,7 @@
 package com.gpuopenanalytics.jenkins.remotedocker.job;
 
 import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import com.gpuopenanalytics.jenkins.remotedocker.config.ConfigItem;
 import com.gpuopenanalytics.jenkins.remotedocker.config.VolumeConfiguration;
 import hudson.Extension;
@@ -80,7 +81,7 @@ public class DockerImageConfiguration extends DockerConfiguration {
         getVolumes().stream()
                 .forEach(item -> item.addArgs(args, build));
 
-        args.add(DockerConfiguration.resolveVariables(
+        args.add(Utils.resolveVariables(
                 build.getBuildVariableResolver(), getImage()));
     }
 

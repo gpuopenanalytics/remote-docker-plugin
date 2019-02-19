@@ -16,7 +16,7 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
-import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfiguration;
+import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.model.AbstractBuild;
 
 import java.util.Objects;
@@ -69,7 +69,7 @@ public abstract class CustomConfigItem extends ConfigItem {
     }
 
     public String getResolvedValue(AbstractBuild build) {
-        return DockerConfiguration.resolveVariables(
+        return Utils.resolveVariables(
                 build.getBuildVariableResolver(), getValue());
     }
 

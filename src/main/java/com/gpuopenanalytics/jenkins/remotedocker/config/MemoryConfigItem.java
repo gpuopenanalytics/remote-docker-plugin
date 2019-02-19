@@ -16,7 +16,7 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
-import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfiguration;
+import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
@@ -43,7 +43,7 @@ public class MemoryConfigItem extends ConfigItem {
 
     @Override
     public void validate() throws Descriptor.FormException {
-        if (!DockerConfiguration.hasVariablesToResolve(memory)) {
+        if (!Utils.hasVariablesToResolve(memory)) {
             if (!VALIDATION_PATTERN.matcher(memory).matches()) {
                 throw new Descriptor.FormException("Memory value is not valid",
                                                    "memory");
@@ -54,7 +54,7 @@ public class MemoryConfigItem extends ConfigItem {
 
     @Override
     public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
-        args.add("-m", DockerConfiguration.resolveVariables(
+        args.add("-m", Utils.resolveVariables(
                 build.getBuildVariableResolver(), memory).toUpperCase());
     }
 
