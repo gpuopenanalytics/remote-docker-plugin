@@ -124,7 +124,7 @@ public class DockerLauncher extends Launcher {
         args.add("sh");
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        int status = executeCommand(launcher, args)
+        int status = executeCommand(args)
                 .stdout(out)
                 .stderr(launcher.getListener().getLogger())
                 .join();
@@ -143,19 +143,17 @@ public class DockerLauncher extends Launcher {
     /**
      * Execute a docker command
      *
-     * @param launcher
      * @param args
      * @return
      */
-    private static Launcher.ProcStarter executeCommand(Launcher launcher,
-                                                       ArgumentListBuilder args) {
+    public Launcher.ProcStarter executeCommand(ArgumentListBuilder args) {
         if (args.toList().isEmpty()) {
             throw new IllegalArgumentException("No args given");
         }
         if (!"docker".equals(args.toList().get(0))) {
             args.prepend("docker");
         }
-        return launcher.launch()
+        return delegate.launch()
                 //TODO I think we should pass something here
                 //.envs()
                 .cmds(args)
@@ -211,7 +209,7 @@ public class DockerLauncher extends Launcher {
             boolean masked = originalMask == null ? false : i < originalMask.length ? originalMask[i] : false;
             args.add(originalCmds.get(i), masked);
         }
-        Launcher.ProcStarter procStarter = executeCommand(delegate, args);
+        Launcher.ProcStarter procStarter = executeCommand(args);
 
         if (starter.stdout() != null) {
             procStarter.stdout(starter.stdout());
@@ -238,7 +236,7 @@ public class DockerLauncher extends Launcher {
                 .add("rm", "-f", containerId);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        int status = executeCommand(this.delegate, args)
+        int status = executeCommand(args)
                 .stdout(out)
                 .stderr(this.listener.getLogger())
                 .join();
@@ -248,5 +246,13 @@ public class DockerLauncher extends Launcher {
         }
     }
 
+    @Nonnull
+    @Override
+    public TaskListener getListener() {
+        return listener;
+    }
 
+    public AbstractBuild getBuild() {
+        return build;
+    }
 }

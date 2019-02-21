@@ -24,13 +24,9 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
-import hudson.util.VariableResolver;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Represents a method of creating a docker container
@@ -61,6 +57,14 @@ public abstract class DockerConfiguration extends AbstractDescribableImpl<Docker
      * @throws Descriptor.FormException
      */
     public abstract void validate() throws Descriptor.FormException;
+
+    /**
+     * Called before the container is started.. This allows for sub classes to
+     * perform setup tasks such as building an image.
+     *
+     * @param launcher
+     */
+    public abstract void setupImage(DockerLauncher launcher) throws IOException, InterruptedException;
 
     /**
      * Build up the <code>docker create</code> argument list

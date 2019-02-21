@@ -66,9 +66,14 @@ public class DockerImageConfiguration extends DockerConfiguration {
         for (ConfigItem item : getConfigItemList()) {
             item.validate();
         }
-        for(VolumeConfiguration volume:getVolumes()){
+        for (VolumeConfiguration volume : getVolumes()) {
             volume.validate();
         }
+    }
+
+    @Override
+    public void setupImage(DockerLauncher launcher) {
+        //No-op
     }
 
     @Override
