@@ -19,19 +19,9 @@
          xmlns:f="/lib/form">
 
     <f:section title="Dockerfile">
-        <f:radioBlock name="dockerfile" value="file" title="Use Dockerfile in repo" inline="true" default="true"
-                      checked="${instance.getDockerFile()!=null || (instance.getDockerFile()==null and instance.getDockerFileText()==null)}">
             <f:entry title="Dockerfile Path" field="dockerFile">
-                <f:textbox/>
+                <f:textbox />
             </f:entry>
-
-        </f:radioBlock>
-        <f:radioBlock name="dockerfile" value="text" title="Specify Dockerfile Contents" inline="true" default="true"
-                      checked="${instance.getDockerFileText()!=null}">
-            <f:entry title="Dockerfile Contents" field="dockerFileTest">
-                <f:textarea/> <!-- TODO code-mirror? -->
-            </f:entry>
-        </f:radioBlock>
     </f:section>
 
     <f:advanced>
@@ -45,7 +35,10 @@
             <f:entry title="Build Arguments" field="buildArgs">
                 <f:textarea/>
             </f:entry>
-            <f:entry title="Force Build" field="forcePull">
+            <f:entry title="Force pull" field="forcePull">
+                <f:checkbox default="true"/>
+            </f:entry>
+            <f:entry title="Force build" field="forceBuild">
                 <f:checkbox/>
             </f:entry>
             <f:entry title="Squash Image" field="squash">

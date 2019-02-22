@@ -31,4 +31,6 @@ public class DockerConfigurationDescriptor extends Descriptor<DockerConfiguratio
         return Jenkins.get().getDescriptorList(DockerConfiguration.class);
     }
 
+
+
 }

@@ -55,31 +55,4 @@
         <input field="gid" name="custom_custom" type="hidden" value="true"/>
     </f:radioBlock>
 
-    <!--<j:if test="${instance.getUserSetting()!=null}">-->
-    <!--<f:radioBlock name="userSetting" value="NV-PLUGIN-USER-DEFAULT"-->
-    <!--title="jenkins - user with UID/GID of 10000 (default)" inline="true"-->
-    <!--checked="${instance.isChecked('NV-PLUGIN-USER-DEFAULT')}"/>-->
-    <!--</j:if>-->
-    <!--<f:radioBlock name="userSetting" value="NV-PLUGIN-USER-ROOT" title="root - user with UID/GID of 0" inline="true"-->
-    <!--checked="${instance.isChecked('NV-PLUGIN-USER-ROOT')}"/>-->
-    <!--<f:radioBlock name="userSetting" value="NV-PLUGIN-USER-EXISTING"-->
-    <!--title="existing - user already defined in container" inline="true"-->
-    <!--checked="${instance.isChecked('NV-PLUGIN-USER-EXISTING')}">-->
-    <!--<f:entry title="Username (Required)" field="userExisting">-->
-    <!--<f:textbox name="userExisting"/>-->
-    <!--</f:entry>-->
-    <!--</f:radioBlock>-->
-    <!--<f:radioBlock name="userSetting" value="NV-PLUGIN-USER-CUSTOM" title="custom - user created in container"-->
-    <!--inline="true" checked="${instance.isChecked('NV-PLUGIN-USER-CUSTOM')}">-->
-    <!--<f:entry title="Username (Required)" field="userName">-->
-    <!--<f:textbox name="userName"/>-->
-    <!--</f:entry>-->
-    <!--<f:entry title="UID (Required)" field="userId">-->
-    <!--<f:textbox name="userId"/>-->
-    <!--</f:entry>-->
-    <!--<f:entry title="GID (Optional)" field="userGroupId">-->
-    <!--<f:textbox name="userGroupId"/>-->
-    <!--</f:entry>-->
-    <!--</f:radioBlock>-->
-
 </j:jelly>

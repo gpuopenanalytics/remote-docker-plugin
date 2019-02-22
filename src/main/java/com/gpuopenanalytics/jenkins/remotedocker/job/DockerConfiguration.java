@@ -63,8 +63,10 @@ public abstract class DockerConfiguration extends AbstractDescribableImpl<Docker
      * perform setup tasks such as building an image.
      *
      * @param launcher
+     * @param localWorkspace
      */
-    public abstract void setupImage(DockerLauncher launcher) throws IOException, InterruptedException;
+    public abstract void setupImage(DockerLauncher launcher,
+                                    String localWorkspace) throws IOException, InterruptedException;
 
     /**
      * Build up the <code>docker create</code> argument list

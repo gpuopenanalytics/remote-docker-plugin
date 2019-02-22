@@ -18,14 +18,17 @@ package com.gpuopenanalytics.jenkins.remotedocker;
 
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfiguration;
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfigurationDescriptor;
+import com.gpuopenanalytics.jenkins.remotedocker.job.DockerImageConfiguration;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.model.Descriptor;
 import hudson.model.Run;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -70,6 +73,10 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
         public Collection<DockerConfigurationDescriptor> getDockerConfigurationItemDescriptors() {
             return DockerConfigurationDescriptor.all();
         }
+
+        public Descriptor getDefaultDockerConfigurationDescriptor(){
+            return Jenkins.get().getDescriptorOrDie(DockerImageConfiguration.class);
+        }
     }
 
     /**
@@ -104,7 +111,7 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
     public Environment setUp(AbstractBuild build,
                              Launcher launcher,
                              BuildListener listener) throws IOException, InterruptedException { ;
-        ((DockerLauncher) launcher).launchContainer(build);
+        ((DockerLauncher) launcher).launchContainer();
         return new DockerEnvironment((DockerLauncher) launcher);
     }
 

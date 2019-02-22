@@ -72,7 +72,8 @@ public class DockerImageConfiguration extends DockerConfiguration {
     }
 
     @Override
-    public void setupImage(DockerLauncher launcher) {
+    public void setupImage(DockerLauncher launcher,
+                           String localWorkspace) {
         //No-op
     }
 

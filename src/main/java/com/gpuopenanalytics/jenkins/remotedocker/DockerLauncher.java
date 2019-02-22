@@ -88,11 +88,10 @@ public class DockerLauncher extends Launcher {
      * Spin up the container mounting the specified path as a volume mount. This
      * method blocks until the container is started.
      *
-     * @param build
      * @throws IOException
      * @throws InterruptedException
      */
-    public void launchContainer(AbstractBuild build) throws IOException, InterruptedException {
+    public void launchContainer() throws IOException, InterruptedException {
         EnvVars environment = build.getEnvironment(listener);
         String workspacePath = build.getWorkspace().getRemote();
         //Fully resolve the source workspace
@@ -100,6 +99,8 @@ public class DockerLauncher extends Launcher {
                 .toRealPath()
                 .toAbsolutePath()
                 .toString();
+
+        dockerConfiguration.setupImage(this, workspaceSrc);
 
         //This is a workaround on macOS where /var is a link to /private/var
         // but the symbolic link is not passed into the docker VM
@@ -116,12 +117,11 @@ public class DockerLauncher extends Launcher {
                 .add("--env", "TMPDIR=" + workspacePath + ".tmp")
                 .add("--workdir", workspacePath)
                 .add("-v", workspaceSrc + ":" + workspacePath)
-                .add("-v", tmpSrc + ":" + tmpDest); //Jenkins puts scripts here
+                .add("-v", tmpSrc + ":" + tmpDest) //Jenkins puts scripts here
+                //Start a shell to block the container, overriding the entrypoint in case the image already defines that
+                .add("--entrypoint", "/bin/sh");
 
         dockerConfiguration.addCreateArgs(args, build);
-
-        //Start a shell so the container blocks
-        args.add("sh");
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         int status = executeCommand(args)

@@ -25,9 +25,12 @@ import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
@@ -35,41 +38,73 @@ import java.util.UUID;
 public class DockerFileConfiguration extends DockerConfiguration {
 
     private String dockerFile;
-    private String dockerFileText;
     private String context;
 
     private String buildArgs;
     private boolean forcePull;
+    private boolean forceBuild;
     private boolean squash;
     private String tag;
 
     //This is calculated at build time, so don't persist it
     private transient String image;
 
+    @DataBoundConstructor
     public DockerFileConfiguration(List<ConfigItem> configItemList,
                                    List<VolumeConfiguration> volumes,
                                    String dockerFile,
-                                   String dockerFileText,
                                    String context,
                                    String buildArgs,
                                    boolean forcePull,
+                                   boolean forceBuild,
                                    boolean squash,
                                    String tag) {
         super(configItemList, volumes);
         this.dockerFile = dockerFile;
-        this.dockerFileText = dockerFileText;
         this.context = context;
         this.buildArgs = buildArgs;
         this.forcePull = forcePull;
+        this.forceBuild = forceBuild;
         this.squash = squash;
         this.tag = tag;
+    }
+
+    public String getDockerFile() {
+        return dockerFile;
+    }
+
+    public String getContext() {
+        return context;
+    }
+
+    public String getBuildArgs() {
+        return buildArgs;
+    }
+
+    public boolean isForcePull() {
+        return forcePull;
+    }
+
+    public boolean isForceBuild() {
+        return forceBuild;
+    }
+
+    public boolean isSquash() {
+        return squash;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public String getImage() {
+        return image;
     }
 
     @Override
     public void validate() throws Descriptor.FormException {
         //TODO Use https://github.com/asottile/dockerfile to validate the contents?
-        if (StringUtils.isEmpty(dockerFile)
-                && StringUtils.isEmpty(dockerFileText)) {
+        if (StringUtils.isEmpty(dockerFile)) {
             throw new Descriptor.FormException(
                     "You must specify a Dockerfile to use",
                     "dockerFile");
@@ -90,11 +125,15 @@ public class DockerFileConfiguration extends DockerConfiguration {
     }
 
     @Override
-    public void setupImage(DockerLauncher launcher) throws IOException, InterruptedException {
+    public void setupImage(DockerLauncher launcher,
+                           String localWorkspace) throws IOException, InterruptedException {
         AbstractBuild build = launcher.getBuild();
         ArgumentListBuilder args = new ArgumentListBuilder("build");
         if (forcePull) {
             args.add("--pull");
+        }
+        if (forceBuild) {
+            args.add("--no-cache");
         }
         if (squash) {
             args.add("--squash");
@@ -115,9 +154,12 @@ public class DockerFileConfiguration extends DockerConfiguration {
         }
         args.add("-t", image);
 
-        if (StringUtils.isNotEmpty(dockerFile)) {
-            args.add("-f", Utils.resolveVariables(build, dockerFile));
+        String dockerFilePath = Utils.resolveVariables(build, dockerFile);
+        Path path = Paths.get(dockerFilePath);
+        if (!path.isAbsolute()) {
+            path = Paths.get(localWorkspace, dockerFilePath);
         }
+        args.add("-f", path.toString());
         if (StringUtils.isNotEmpty(context)) {
             args.add(Utils.resolveVariables(build, context));
         } else {
@@ -149,6 +191,7 @@ public class DockerFileConfiguration extends DockerConfiguration {
         public String getDisplayName() {
             return "Build Dockerfile";
         }
+
     }
 
     private Properties parsePropertiesString(String s) throws IOException {
