@@ -16,35 +16,15 @@
   -->
 
 <j:jelly xmlns:j="jelly:core"
-         xmlns:f="/lib/form">
+         xmlns:f="/lib/form"
+         xmlns:st="jelly:stapler">
 
-    <f:section title="Dockerfile">
-            <f:entry title="Dockerfile Path" field="dockerFile">
-                <f:textbox />
-            </f:entry>
-    </f:section>
+    <st:include page="main-config.jelly" class="${descriptor.clazz}" optional="false"/>
 
     <f:advanced>
         <f:section title="Advanced Settings">
-            <f:entry title="Build context" field="context">
-                <f:textbox/>
-            </f:entry>
-            <f:entry title="Tag" field="tag">
-                <f:textbox/>
-            </f:entry>
-            <f:entry title="Build Arguments" field="buildArgs">
-                <f:textarea/>
-            </f:entry>
-            <f:entry title="Force pull" field="forcePull">
-                <f:checkbox default="true"/>
-            </f:entry>
-            <f:entry title="Force build" field="forceBuild">
-                <f:checkbox/>
-            </f:entry>
-            <f:entry title="Squash Image" field="squash">
-                <f:checkbox/>
-            </f:entry>
 
+            <st:include page="advanced-config.jelly" class="${descriptor.clazz}" optional="true"/>
 
             <f:entry title="Additional Settings">
                 <f:repeatableHeteroProperty field="configItemList"
