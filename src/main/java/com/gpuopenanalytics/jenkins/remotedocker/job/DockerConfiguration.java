@@ -59,7 +59,7 @@ public abstract class DockerConfiguration extends AbstractDescribableImpl<Docker
     public abstract void validate() throws Descriptor.FormException;
 
     /**
-     * Called before the container is started.. This allows for sub classes to
+     * Called before the container is started. This allows for sub classes to
      * perform setup tasks such as building an image.
      *
      * @param launcher

@@ -19,6 +19,7 @@ package com.gpuopenanalytics.jenkins.remotedocker;
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfiguration;
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfigurationDescriptor;
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerImageConfiguration;
+import com.gpuopenanalytics.jenkins.remotedocker.job.SideDockerConfiguration;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
@@ -35,6 +36,7 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Main entrypoint for the plugin. This wraps a build, decorating the {@link
@@ -44,6 +46,7 @@ import java.util.Collection;
 public class RemoteDockerBuildWrapper extends BuildWrapper {
 
     private DockerConfiguration dockerConfiguration;
+    private List<SideDockerConfiguration> sideDockerConfigurations;
 
     @Extension
     public static class DescriptorImpl extends BuildWrapperDescriptor {
@@ -67,6 +70,9 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
             RemoteDockerBuildWrapper wrapper = (RemoteDockerBuildWrapper) super.newInstance(
                     req, formData);
             wrapper.dockerConfiguration.validate();
+            for (SideDockerConfiguration side : wrapper.sideDockerConfigurations) {
+                side.validate();
+            }
             return wrapper;
         }
 
@@ -74,8 +80,9 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
             return DockerConfigurationDescriptor.all();
         }
 
-        public Descriptor getDefaultDockerConfigurationDescriptor(){
-            return Jenkins.get().getDescriptorOrDie(DockerImageConfiguration.class);
+        public Descriptor getDefaultDockerConfigurationDescriptor() {
+            return Jenkins.get().getDescriptorOrDie(
+                    DockerImageConfiguration.class);
         }
     }
 
@@ -99,18 +106,24 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
     }
 
     @DataBoundConstructor
-    public RemoteDockerBuildWrapper(DockerConfiguration dockerConfiguration) {
+    public RemoteDockerBuildWrapper(DockerConfiguration dockerConfiguration,
+                                    List<SideDockerConfiguration> sideDockerConfigurations) {
         this.dockerConfiguration = dockerConfiguration;
+        this.sideDockerConfigurations = sideDockerConfigurations;
     }
 
     public DockerConfiguration getDockerConfiguration() {
         return dockerConfiguration;
     }
 
+    public List<SideDockerConfiguration> getSideDockerConfigurations() {
+        return sideDockerConfigurations;
+    }
+
     @Override
     public Environment setUp(AbstractBuild build,
                              Launcher launcher,
-                             BuildListener listener) throws IOException, InterruptedException { ;
+                             BuildListener listener) throws IOException, InterruptedException {
         ((DockerLauncher) launcher).launchContainer();
         return new DockerEnvironment((DockerLauncher) launcher);
     }
@@ -119,7 +132,8 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
     public Launcher decorateLauncher(AbstractBuild build,
                                      Launcher launcher,
                                      BuildListener listener) throws IOException, InterruptedException, Run.RunnerAbortedException {
-        return new DockerLauncher(build, launcher, listener, dockerConfiguration);
+        return new DockerLauncher(build, launcher, listener,
+                                  dockerConfiguration);
     }
 
 }
