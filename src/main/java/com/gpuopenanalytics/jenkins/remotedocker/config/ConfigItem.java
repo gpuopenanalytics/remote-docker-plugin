@@ -41,9 +41,11 @@ public abstract class ConfigItem extends AbstractDescribableImpl<ConfigItem> imp
     /**
      * Add the arguments to <code>docker create</code>
      *
+     * @param launcher
      * @param args
      */
-    public abstract void addCreateArgs(ArgumentListBuilder args,
+    public abstract void addCreateArgs(DockerLauncher launcher,
+                                       ArgumentListBuilder args,
                                        AbstractBuild build);
 
     /**
@@ -59,9 +61,12 @@ public abstract class ConfigItem extends AbstractDescribableImpl<ConfigItem> imp
      * Add the arguments to <code>docker exec</code> command that actually
      * executes the build
      *
+     * @param launcher
      * @param args
      */
-    public void addRunArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addRunArgs(DockerLauncher launcher,
+                           ArgumentListBuilder args,
+                           AbstractBuild build) {
         //No-op, sub-classes should override
     }
 

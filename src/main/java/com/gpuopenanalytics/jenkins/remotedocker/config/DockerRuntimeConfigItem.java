@@ -16,6 +16,7 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
+import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
@@ -49,7 +50,9 @@ public class DockerRuntimeConfigItem extends CustomConfigItem {
     }
 
     @Override
-    public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addCreateArgs(DockerLauncher launcher,
+                              ArgumentListBuilder args,
+                              AbstractBuild build) {
         args.addKeyValuePair("", "--runtime", getResolvedValue(build), false);
     }
 

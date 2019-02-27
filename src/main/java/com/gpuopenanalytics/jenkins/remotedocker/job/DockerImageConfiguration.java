@@ -78,12 +78,14 @@ public class DockerImageConfiguration extends DockerConfiguration {
     }
 
     @Override
-    public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addCreateArgs(DockerLauncher launcher,
+                              ArgumentListBuilder args,
+                              AbstractBuild build) {
         if (isForcePull()) {
             args.add("--pull");
         }
         getConfigItemList().stream()
-                .forEach(item -> item.addCreateArgs(args, build));
+                .forEach(item -> item.addCreateArgs(launcher, args, build));
         getVolumes().stream()
                 .forEach(item -> item.addArgs(args, build));
 
@@ -98,8 +100,10 @@ public class DockerImageConfiguration extends DockerConfiguration {
     }
 
     @Override
-    public void addRunArgs(ArgumentListBuilder args, AbstractBuild build) {
-        super.addRunArgs(args, build);
+    public void addRunArgs(DockerLauncher launcher,
+                           ArgumentListBuilder args,
+                           AbstractBuild build) {
+        super.addRunArgs(launcher, args, build);
     }
 
     @Extension

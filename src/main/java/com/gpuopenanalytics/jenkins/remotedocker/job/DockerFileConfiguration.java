@@ -176,9 +176,11 @@ public class DockerFileConfiguration extends DockerConfiguration {
     }
 
     @Override
-    public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addCreateArgs(DockerLauncher launcher,
+                              ArgumentListBuilder args,
+                              AbstractBuild build) {
         getConfigItemList().stream()
-                .forEach(item -> item.addCreateArgs(args, build));
+                .forEach(item -> item.addCreateArgs(launcher, args, build));
         getVolumes().stream()
                 .forEach(item -> item.addArgs(args, build));
         args.add(image);

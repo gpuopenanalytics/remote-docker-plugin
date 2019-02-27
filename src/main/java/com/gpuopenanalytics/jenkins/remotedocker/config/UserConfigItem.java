@@ -102,7 +102,9 @@ public class UserConfigItem extends ConfigItem {
     }
 
     @Override
-    public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addCreateArgs(DockerLauncher launcher,
+                              ArgumentListBuilder args,
+                              AbstractBuild build) {
         //No-op
     }
 
@@ -133,7 +135,9 @@ public class UserConfigItem extends ConfigItem {
     }
 
     @Override
-    public void addRunArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addRunArgs(DockerLauncher launcher,
+                           ArgumentListBuilder args,
+                           AbstractBuild build) {
         args.add("--user", Utils.resolveVariables(
                 build.getBuildVariableResolver(), username));
     }

@@ -121,7 +121,7 @@ public class DockerLauncher extends Launcher {
                 //Start a shell to block the container, overriding the entrypoint in case the image already defines that
                 .add("--entrypoint", "/bin/sh");
 
-        dockerConfiguration.addCreateArgs(args, build);
+        dockerConfiguration.addCreateArgs(this, args, build);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         int status = executeCommand(args)
@@ -196,7 +196,7 @@ public class DockerLauncher extends Launcher {
             args.add("--workdir", starter.pwd().getRemote());
         }
         if (addRunArgs) {
-            dockerConfiguration.addRunArgs(args, build);
+            dockerConfiguration.addRunArgs(this, args, build);
         }
 
         args.add(containerId);

@@ -17,6 +17,7 @@
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
 import com.google.common.collect.Lists;
+import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
@@ -78,7 +79,9 @@ public class NvidiaDriverAbilityConfigItem extends ConfigItem {
     }
 
     @Override
-    public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addCreateArgs(DockerLauncher launcher,
+                              ArgumentListBuilder args,
+                              AbstractBuild build) {
         List<String> abilities = Lists.newArrayList();
         if (compute) {
             abilities.add("compute");

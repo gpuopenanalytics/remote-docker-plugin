@@ -16,11 +16,15 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
+import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import java.io.IOException;
 
 /**
  * Defines which GPU devices are visible in the container. Passes
@@ -55,8 +59,31 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
     }
 
     @Override
-    public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addCreateArgs(DockerLauncher launcher,
+                              ArgumentListBuilder args,
+                              AbstractBuild build) {
         args.add("-e");
-        args.addKeyValuePair("", ENV_VAR_NAME, getResolvedValue(build), false);
+        if ("executor".equals(getValue())) {
+            try {
+                String index = build.getEnvironment(launcher.getListener()).get(
+                        "EXECUTOR_NUMBER", null);
+                args.addKeyValuePair("", ENV_VAR_NAME, index,
+                                     false);
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            args.addKeyValuePair("", ENV_VAR_NAME, getResolvedValue(build),
+                                 false);
+        }
+    }
+
+    @Extension
+    public static class DescriptorImpl extends Descriptor<ConfigItem> {
+
+        @Override
+        public String getDisplayName() {
+            return "NVIDIA Device Visibility";
+        }
     }
 }

@@ -74,7 +74,8 @@ public abstract class DockerConfiguration extends AbstractDescribableImpl<Docker
      * @param args
      * @param build
      */
-    public abstract void addCreateArgs(ArgumentListBuilder args,
+    public abstract void addCreateArgs(DockerLauncher launcher,
+                                       ArgumentListBuilder args,
                                        AbstractBuild build);
 
     /**
@@ -96,9 +97,9 @@ public abstract class DockerConfiguration extends AbstractDescribableImpl<Docker
      *
      * @param args
      */
-    public void addRunArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addRunArgs(DockerLauncher launcher, ArgumentListBuilder args, AbstractBuild build) {
         for (ConfigItem item : configItemList) {
-            item.addRunArgs(args, build);
+            item.addRunArgs(launcher, args, build);
         }
     }
 

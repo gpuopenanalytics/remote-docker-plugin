@@ -25,6 +25,7 @@
     </j:if>
     <f:radioBlock name="nvidiaDevices" value="none" title="none - No GPU will be accessible, but driver capabilities will be enabled" inline="true" checked="${instance.isChecked('none')}" />
     <f:radioBlock name="nvidiaDevices" value="void" title="void - Same behavior as using Docker runtime 'runc'" inline="true" checked="${instance.isChecked('void')}" />
+    <f:radioBlock name="nvidiaDevices" value="executor" title="executor - A single GPU is accessible indexed by the current executor" inline="true" checked="${instance.isChecked('executor')}" />
     <f:radioBlock name="nvidiaDevices" value="custom" title="custom - Define which GPU(s) will be visible in container" inline="true" checked="${instance.isChecked('custom')}">
         <f:entry title="GPU UUID(s) or GPU index(es)" field="nvidiaDevicesCustom">
             <f:textbox name="nvidiaDevicesCustom" />

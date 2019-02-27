@@ -16,6 +16,7 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
+import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
@@ -53,7 +54,9 @@ public class MemoryConfigItem extends ConfigItem {
     }
 
     @Override
-    public void addCreateArgs(ArgumentListBuilder args, AbstractBuild build) {
+    public void addCreateArgs(DockerLauncher launcher,
+                              ArgumentListBuilder args,
+                              AbstractBuild build) {
         args.add("-m", Utils.resolveVariables(
                 build.getBuildVariableResolver(), memory).toUpperCase());
     }
