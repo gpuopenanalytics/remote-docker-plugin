@@ -16,8 +16,8 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker;
 
+import com.gpuopenanalytics.jenkins.remotedocker.job.AbstractDockerConfigurationDescriptor;
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfiguration;
-import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfigurationDescriptor;
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerImageConfiguration;
 import com.gpuopenanalytics.jenkins.remotedocker.job.SideDockerConfiguration;
 import hudson.Extension;
@@ -76,8 +76,8 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
             return wrapper;
         }
 
-        public Collection<DockerConfigurationDescriptor> getDockerConfigurationItemDescriptors() {
-            return DockerConfigurationDescriptor.all();
+        public Collection<AbstractDockerConfigurationDescriptor> getDockerConfigurationItemDescriptors() {
+            return AbstractDockerConfigurationDescriptor.all();
         }
 
         public Descriptor getDefaultDockerConfigurationDescriptor() {
@@ -124,8 +124,15 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
     public Environment setUp(AbstractBuild build,
                              Launcher launcher,
                              BuildListener listener) throws IOException, InterruptedException {
-        ((DockerLauncher) launcher).launchContainer();
-        return new DockerEnvironment((DockerLauncher) launcher);
+        try {
+            ((DockerLauncher) launcher).launchContainers();
+            return new DockerEnvironment((DockerLauncher) launcher);
+        } catch (IOException | InterruptedException e) {
+            //Attempt tearDown in case we partially started some containers
+            ((DockerLauncher) launcher).tearDown();
+            throw e;
+        }
+
     }
 
     @Override
@@ -133,7 +140,7 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
                                      Launcher launcher,
                                      BuildListener listener) throws IOException, InterruptedException, Run.RunnerAbortedException {
         return new DockerLauncher(build, launcher, listener,
-                                  dockerConfiguration);
+                                  this);
     }
 
 }

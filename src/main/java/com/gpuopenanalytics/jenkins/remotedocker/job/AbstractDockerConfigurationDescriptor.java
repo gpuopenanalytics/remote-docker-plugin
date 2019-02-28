@@ -22,13 +22,13 @@ import jenkins.model.Jenkins;
 import java.util.List;
 
 /**
- * Descriptor superclass for {@link DockerConfiguration} subclasses'
+ * Descriptor superclass for {@link AbstractDockerConfiguration} subclasses'
  * descriptors.
  */
-public class DockerConfigurationDescriptor extends Descriptor<DockerConfiguration> {
+public class AbstractDockerConfigurationDescriptor extends Descriptor<AbstractDockerConfiguration> {
 
-    public static List<DockerConfigurationDescriptor> all() {
-        return Jenkins.get().getDescriptorList(DockerConfiguration.class);
+    public static List<AbstractDockerConfigurationDescriptor> all() {
+        return Jenkins.get().getDescriptorList(AbstractDockerConfiguration.class);
     }
 
 

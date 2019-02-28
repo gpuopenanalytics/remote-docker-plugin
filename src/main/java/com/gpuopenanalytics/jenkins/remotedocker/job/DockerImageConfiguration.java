@@ -32,9 +32,9 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * A {@link DockerConfiguration} created from an existing docker image.
+ * A {@link AbstractDockerConfiguration} created from an existing docker image.
  */
-public class DockerImageConfiguration extends DockerConfiguration {
+public class DockerImageConfiguration extends AbstractDockerConfiguration {
 
     private final String image;
     private final boolean forcePull;
@@ -107,7 +107,7 @@ public class DockerImageConfiguration extends DockerConfiguration {
     }
 
     @Extension
-    public static class DescriptorImpl extends DockerConfigurationDescriptor {
+    public static class DescriptorImpl extends AbstractDockerConfigurationDescriptor {
 
         @Nonnull
         @Override

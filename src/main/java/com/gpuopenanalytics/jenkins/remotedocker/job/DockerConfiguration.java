@@ -16,47 +16,21 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.job;
 
-import com.google.common.collect.Lists;
 import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
-import com.gpuopenanalytics.jenkins.remotedocker.config.ConfigItem;
-import com.gpuopenanalytics.jenkins.remotedocker.config.VolumeConfiguration;
 import hudson.model.AbstractBuild;
-import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 
 import java.io.IOException;
-import java.util.List;
 
-/**
- * Represents a method of creating a docker container
- */
-public abstract class DockerConfiguration extends AbstractDescribableImpl<DockerConfiguration> {
-
-    protected List<ConfigItem> configItemList;
-    protected List<VolumeConfiguration> volumes;
-
-    public DockerConfiguration(List<ConfigItem> configItemList,
-                               List<VolumeConfiguration> volumes) {
-        this.configItemList = configItemList == null ? Lists.newArrayList() : configItemList;
-        this.volumes = volumes == null ? Lists.newArrayList() : volumes;
-    }
-
-    public List<ConfigItem> getConfigItemList() {
-        return configItemList;
-    }
-
-    public List<VolumeConfiguration> getVolumes() {
-        return volumes;
-    }
+public interface DockerConfiguration {
 
     /**
-     * Validate the correctness of the configuration. Subclasses should validate
-     * their {@link ConfigItem} list.
+     * Validate the correctness of the configuration.
      *
      * @throws Descriptor.FormException
      */
-    public abstract void validate() throws Descriptor.FormException;
+    void validate() throws Descriptor.FormException;
 
     /**
      * Called before the container is started. This allows for sub classes to
@@ -65,18 +39,19 @@ public abstract class DockerConfiguration extends AbstractDescribableImpl<Docker
      * @param launcher
      * @param localWorkspace
      */
-    public abstract void setupImage(DockerLauncher launcher,
-                                    String localWorkspace) throws IOException, InterruptedException;
+    void setupImage(DockerLauncher launcher,
+                    String localWorkspace) throws IOException, InterruptedException;
 
     /**
-     * Build up the <code>docker create</code> argument list
+     * Add args to the <code>docker create</code>
      *
+     * @param launcher
      * @param args
      * @param build
      */
-    public abstract void addCreateArgs(DockerLauncher launcher,
-                                       ArgumentListBuilder args,
-                                       AbstractBuild build);
+    void addCreateArgs(DockerLauncher launcher,
+                       ArgumentListBuilder args,
+                       AbstractBuild build);
 
     /**
      * Runs after the container is running, but before the build executes
@@ -84,12 +59,8 @@ public abstract class DockerConfiguration extends AbstractDescribableImpl<Docker
      * @param launcher
      * @param build
      */
-    public void postCreate(DockerLauncher launcher,
-                           AbstractBuild build) throws IOException, InterruptedException {
-        for (ConfigItem item : configItemList) {
-            item.postCreate(launcher, build);
-        }
-    }
+    void postCreate(DockerLauncher launcher,
+                    AbstractBuild build) throws IOException, InterruptedException;
 
     /**
      * Add the arguments to <code>docker exec</code> command that actually
@@ -97,11 +68,7 @@ public abstract class DockerConfiguration extends AbstractDescribableImpl<Docker
      *
      * @param args
      */
-    public void addRunArgs(DockerLauncher launcher, ArgumentListBuilder args, AbstractBuild build) {
-        for (ConfigItem item : configItemList) {
-            item.addRunArgs(launcher, args, build);
-        }
-    }
-
-
+    void addRunArgs(DockerLauncher launcher,
+                    ArgumentListBuilder args,
+                    AbstractBuild build);
 }

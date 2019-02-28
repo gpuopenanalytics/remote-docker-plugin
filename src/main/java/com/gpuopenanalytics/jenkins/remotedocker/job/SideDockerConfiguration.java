@@ -28,14 +28,14 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 
-public class SideDockerConfiguration extends AbstractDescribableImpl<SideDockerConfiguration> {
+public class SideDockerConfiguration extends AbstractDescribableImpl<SideDockerConfiguration> implements DockerConfiguration {
 
     private String name;
-    private DockerConfiguration dockerConfiguration;
+    private AbstractDockerConfiguration dockerConfiguration;
 
     @DataBoundConstructor
     public SideDockerConfiguration(String name,
-                                   DockerConfiguration dockerConfiguration) {
+                                   AbstractDockerConfiguration dockerConfiguration) {
         this.name = name;
         this.dockerConfiguration = dockerConfiguration;
     }
@@ -44,23 +44,26 @@ public class SideDockerConfiguration extends AbstractDescribableImpl<SideDockerC
         return name;
     }
 
-    public DockerConfiguration getDockerConfiguration() {
+    public AbstractDockerConfiguration getDockerConfiguration() {
         return dockerConfiguration;
     }
 
+    @Override
     public void validate() throws Descriptor.FormException {
-        if(StringUtils.isEmpty(name)){
-            throw new Descriptor.FormException("Side container must have a name","name");
+        if (StringUtils.isEmpty(name)) {
+            throw new Descriptor.FormException(
+                    "Side container must have a name", "name");
         }
         dockerConfiguration.validate();
     }
 
-    /**
-     * Build up the <code>docker create</code> argument list
-     *
-     * @param args
-     * @param build
-     */
+    @Override
+    public void setupImage(DockerLauncher launcher,
+                           String localWorkspace) throws IOException, InterruptedException {
+        //no-op
+    }
+
+    @Override
     public void addCreateArgs(DockerLauncher launcher,
                               ArgumentListBuilder args,
                               AbstractBuild build) {
@@ -68,23 +71,14 @@ public class SideDockerConfiguration extends AbstractDescribableImpl<SideDockerC
         dockerConfiguration.addCreateArgs(launcher, args, build);
     }
 
-    /**
-     * Runs after the container is running, but before the build executes
-     *
-     * @param launcher
-     * @param build
-     */
+    @Override
     public void postCreate(DockerLauncher launcher,
                            AbstractBuild build) throws IOException, InterruptedException {
         dockerConfiguration.postCreate(launcher, build);
     }
 
-    /**
-     * Add the arguments to <code>docker exec</code> command that actually
-     * executes the build
-     *
-     * @param args
-     */
+
+    @Override
     public void addRunArgs(DockerLauncher launcher,
                            ArgumentListBuilder args,
                            AbstractBuild build) {

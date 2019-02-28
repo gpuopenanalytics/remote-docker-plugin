@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
-public class DockerFileConfiguration extends DockerConfiguration {
+public class DockerFileConfiguration extends AbstractDockerConfiguration {
 
     private String dockerFile;
     private String context;
@@ -187,7 +187,7 @@ public class DockerFileConfiguration extends DockerConfiguration {
     }
 
     @Extension
-    public static class DescriptorImpl extends DockerConfigurationDescriptor {
+    public static class DescriptorImpl extends AbstractDockerConfigurationDescriptor {
 
         @Override
         public String getDisplayName() {
