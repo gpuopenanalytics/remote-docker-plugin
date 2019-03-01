@@ -22,7 +22,6 @@ import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
-import hudson.util.VariableResolver;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -112,11 +111,9 @@ public class UserConfigItem extends ConfigItem {
     public void postCreate(DockerLauncher launcher,
                            AbstractBuild build) throws IOException, InterruptedException {
         if (!isExisting() && !"root".equals(username)) {
-            VariableResolver r = build.getBuildVariableResolver();
-            String gid = Utils.resolveVariables(r, this.gid);
-            String uid = Utils.resolveVariables(r, this.uid);
-            String username = Utils.resolveVariables(r,
-                                                     this.username);
+            String gid = Utils.resolveVariables(build, this.gid);
+            String uid = Utils.resolveVariables(build, this.uid);
+            String username = Utils.resolveVariables(build, this.username);
 
             ArgumentListBuilder groupAddArgs = new ArgumentListBuilder();
             groupAddArgs.add("groupadd", "-g", gid, username);
@@ -138,8 +135,7 @@ public class UserConfigItem extends ConfigItem {
     public void addRunArgs(DockerLauncher launcher,
                            ArgumentListBuilder args,
                            AbstractBuild build) {
-        args.add("--user", Utils.resolveVariables(
-                build.getBuildVariableResolver(), username));
+        args.add("--user", Utils.resolveVariables(build, username));
     }
 
     @Extension

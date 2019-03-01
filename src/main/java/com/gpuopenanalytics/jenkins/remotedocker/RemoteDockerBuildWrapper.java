@@ -16,8 +16,8 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker;
 
+import com.gpuopenanalytics.jenkins.remotedocker.job.AbstractDockerConfiguration;
 import com.gpuopenanalytics.jenkins.remotedocker.job.AbstractDockerConfigurationDescriptor;
-import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfiguration;
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerImageConfiguration;
 import com.gpuopenanalytics.jenkins.remotedocker.job.SideDockerConfiguration;
 import hudson.Extension;
@@ -26,6 +26,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor;
+import hudson.model.FreeStyleProject;
 import hudson.model.Run;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
@@ -45,15 +46,71 @@ import java.util.List;
  */
 public class RemoteDockerBuildWrapper extends BuildWrapper {
 
-    private DockerConfiguration dockerConfiguration;
+    private AbstractDockerConfiguration dockerConfiguration;
     private List<SideDockerConfiguration> sideDockerConfigurations;
+
+    @DataBoundConstructor
+    public RemoteDockerBuildWrapper(AbstractDockerConfiguration dockerConfiguration,
+                                    List<SideDockerConfiguration> sideDockerConfigurations) {
+        this.dockerConfiguration = dockerConfiguration;
+        this.sideDockerConfigurations = sideDockerConfigurations;
+    }
+
+    public AbstractDockerConfiguration getDockerConfiguration() {
+        return dockerConfiguration;
+    }
+
+    public List<SideDockerConfiguration> getSideDockerConfigurations() {
+        return sideDockerConfigurations;
+    }
+
+    @Override
+    public Launcher decorateLauncher(AbstractBuild build,
+                                     Launcher launcher,
+                                     BuildListener listener) throws Run.RunnerAbortedException {
+        return new DockerLauncher(build, launcher, listener, this);
+    }
+
+    @Override
+    public Environment setUp(AbstractBuild build,
+                             Launcher launcher,
+                             BuildListener listener) throws IOException, InterruptedException {
+        try {
+            ((DockerLauncher) launcher).launchContainers();
+            return new DockerEnvironment((DockerLauncher) launcher);
+        } catch (IOException | InterruptedException e) {
+            //Attempt tearDown in case we partially started some containers
+            ((DockerLauncher) launcher).tearDown();
+            throw e;
+        }
+
+    }
+
+    /**
+     * Simple wrapper to allow for tearDown
+     */
+    private class DockerEnvironment extends BuildWrapper.Environment {
+
+        private DockerLauncher launcher;
+
+        public DockerEnvironment(DockerLauncher launcher) {
+            this.launcher = launcher;
+        }
+
+        @Override
+        public boolean tearDown(AbstractBuild build,
+                                BuildListener listener) throws IOException, InterruptedException {
+            this.launcher.tearDown();
+            return true;
+        }
+    }
 
     @Extension
     public static class DescriptorImpl extends BuildWrapperDescriptor {
 
         @Override
         public boolean isApplicable(AbstractProject<?, ?> item) {
-            return true;
+            return item instanceof FreeStyleProject;
         }
 
         @Override
@@ -84,63 +141,6 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
             return Jenkins.get().getDescriptorOrDie(
                     DockerImageConfiguration.class);
         }
-    }
-
-    /**
-     * Simple wrapper to allow for tearDown
-     */
-    private class DockerEnvironment extends BuildWrapper.Environment {
-
-        private DockerLauncher launcher;
-
-        public DockerEnvironment(DockerLauncher launcher) {
-            this.launcher = launcher;
-        }
-
-        @Override
-        public boolean tearDown(AbstractBuild build,
-                                BuildListener listener) throws IOException, InterruptedException {
-            this.launcher.tearDown();
-            return true;
-        }
-    }
-
-    @DataBoundConstructor
-    public RemoteDockerBuildWrapper(DockerConfiguration dockerConfiguration,
-                                    List<SideDockerConfiguration> sideDockerConfigurations) {
-        this.dockerConfiguration = dockerConfiguration;
-        this.sideDockerConfigurations = sideDockerConfigurations;
-    }
-
-    public DockerConfiguration getDockerConfiguration() {
-        return dockerConfiguration;
-    }
-
-    public List<SideDockerConfiguration> getSideDockerConfigurations() {
-        return sideDockerConfigurations;
-    }
-
-    @Override
-    public Environment setUp(AbstractBuild build,
-                             Launcher launcher,
-                             BuildListener listener) throws IOException, InterruptedException {
-        try {
-            ((DockerLauncher) launcher).launchContainers();
-            return new DockerEnvironment((DockerLauncher) launcher);
-        } catch (IOException | InterruptedException e) {
-            //Attempt tearDown in case we partially started some containers
-            ((DockerLauncher) launcher).tearDown();
-            throw e;
-        }
-
-    }
-
-    @Override
-    public Launcher decorateLauncher(AbstractBuild build,
-                                     Launcher launcher,
-                                     BuildListener listener) throws IOException, InterruptedException, Run.RunnerAbortedException {
-        return new DockerLauncher(build, launcher, listener,
-                                  this);
     }
 
 }

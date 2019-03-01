@@ -28,7 +28,6 @@ import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -109,13 +108,6 @@ public class DockerFileConfiguration extends AbstractDockerConfiguration {
                     "You must specify a Dockerfile to use",
                     "dockerFile");
         }
-        try {
-            if (StringUtils.isNotEmpty(buildArgs)) {
-                parsePropertiesString(buildArgs);
-            }
-        } catch (IOException e) {
-            throw new Descriptor.FormException(e.getMessage(), "environment");
-        }
         for (ConfigItem item : getConfigItemList()) {
             item.validate();
         }
@@ -128,7 +120,7 @@ public class DockerFileConfiguration extends AbstractDockerConfiguration {
     public void setupImage(DockerLauncher launcher,
                            String localWorkspace) throws IOException, InterruptedException {
         AbstractBuild build = launcher.getBuild();
-        ArgumentListBuilder args = new ArgumentListBuilder("build");
+        ArgumentListBuilder args = new ArgumentListBuilder("docker", "build");
         if (forcePull) {
             args.add("--pull");
         }
@@ -139,7 +131,7 @@ public class DockerFileConfiguration extends AbstractDockerConfiguration {
             args.add("--squash");
         }
         if (StringUtils.isNotEmpty(buildArgs)) {
-            Properties props = parsePropertiesString(buildArgs);
+            Properties props = Utils.parsePropertiesString(buildArgs);
             for (String key : props.stringPropertyNames()) {
                 String value = Utils.resolveVariables(build,
                                                       props.getProperty(key));
@@ -194,11 +186,5 @@ public class DockerFileConfiguration extends AbstractDockerConfiguration {
             return "Build Dockerfile";
         }
 
-    }
-
-    private Properties parsePropertiesString(String s) throws IOException {
-        final Properties p = new Properties();
-        p.load(new StringReader(s));
-        return p;
     }
 }

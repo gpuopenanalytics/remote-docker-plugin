@@ -30,7 +30,4 @@ public class AbstractDockerConfigurationDescriptor extends Descriptor<AbstractDo
     public static List<AbstractDockerConfigurationDescriptor> all() {
         return Jenkins.get().getDescriptorList(AbstractDockerConfiguration.class);
     }
-
-
-
 }

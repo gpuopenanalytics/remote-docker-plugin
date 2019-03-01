@@ -65,8 +65,8 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
         args.add("-e");
         if ("executor".equals(getValue())) {
             try {
-                String index = build.getEnvironment(launcher.getListener()).get(
-                        "EXECUTOR_NUMBER", null);
+                String index = build.getEnvironment(launcher.getListener())
+                        .get("EXECUTOR_NUMBER", null);
                 args.addKeyValuePair("", ENV_VAR_NAME, index,
                                      false);
             } catch (IOException | InterruptedException e) {

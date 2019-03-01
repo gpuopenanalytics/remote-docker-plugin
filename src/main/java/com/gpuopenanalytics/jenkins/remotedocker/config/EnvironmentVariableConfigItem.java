@@ -17,14 +17,13 @@
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
 import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.Properties;
 
 /**
@@ -41,33 +40,19 @@ public class EnvironmentVariableConfigItem extends ConfigItem {
 
     @Override
     public void validate() throws Descriptor.FormException {
-        try {
-            parsePropertiesString(environment);
-        } catch (IOException e) {
-            throw new Descriptor.FormException(e.getMessage(), "environment");
-        }
+        //no-op
     }
 
     @Override
     public void addCreateArgs(DockerLauncher launcher,
                               ArgumentListBuilder args,
                               AbstractBuild build) {
-        try {
-            Properties props = parsePropertiesString(environment);
-            for (String key : props.stringPropertyNames()) {
-                String value = props.getProperty(key);
-                args.add("-e");
-                args.addKeyValuePair("", key, value, false);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        Properties props = Utils.parsePropertiesString(environment);
+        for (String key : props.stringPropertyNames()) {
+            String value = props.getProperty(key);
+            args.add("-e");
+            args.addKeyValuePair("", key, value, false);
         }
-    }
-
-    private Properties parsePropertiesString(String s) throws IOException {
-        final Properties p = new Properties();
-        p.load(new StringReader(s));
-        return p;
     }
 
     @Extension

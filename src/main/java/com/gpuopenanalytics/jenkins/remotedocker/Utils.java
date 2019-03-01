@@ -19,7 +19,10 @@ package com.gpuopenanalytics.jenkins.remotedocker;
 import hudson.model.AbstractBuild;
 import hudson.util.VariableResolver;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,7 +31,7 @@ public class Utils {
     private static final Pattern VAR_REGEX = Pattern.compile(
             "\\$(\\w+)|\\$\\{([^}]+)}");
 
-    private Utils(){
+    private Utils() {
 
     }
 
@@ -63,16 +66,42 @@ public class Utils {
         while (m.find()) {
             String varName = java.util.Optional.ofNullable(m.group(1))
                     .orElseGet(() -> m.group(2));
-            Optional<String> newValue = Optional.ofNullable(
-                    resolver.resolve(varName));
-            m.appendReplacement(sb, newValue.orElseGet(() -> "\\$" + varName));
+            String newValue = Optional.ofNullable(resolver.resolve(varName))
+                    .orElseGet(() -> "\\${" + varName + "}");
+            m.appendReplacement(sb, newValue);
         }
         m.appendTail(sb);
         return sb.toString();
     }
 
+    /**
+     * Returns whether the string contains any <code>$VAR</code> or
+     * <code>${VAR}</code> that could be replaced.
+     *
+     * @param s
+     * @return
+     */
     public static boolean hasVariablesToResolve(String s) {
         Matcher m = VAR_REGEX.matcher(s);
         return m.find();
+    }
+
+    /**
+     * Parses a String representation of a properties file into a {@link
+     * Properties}
+     *
+     * @param s
+     * @return
+     * @throws IOException
+     */
+    public static Properties parsePropertiesString(String s) {
+        try {
+            final Properties p = new Properties();
+            p.load(new StringReader(s));
+            return p;
+        } catch (IOException e) {
+            //This shouldn't happen
+            throw new RuntimeException(e);
+        }
     }
 }

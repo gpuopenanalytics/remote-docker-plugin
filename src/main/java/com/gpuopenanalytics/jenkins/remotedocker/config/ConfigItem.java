@@ -50,11 +50,13 @@ public abstract class ConfigItem extends AbstractDescribableImpl<ConfigItem> imp
 
     /**
      * Runs after the container is running, but before the build executes
+     *
      * @param launcher
      * @param build
      */
-    public void postCreate(DockerLauncher launcher, AbstractBuild build) throws IOException, InterruptedException {
-
+    public void postCreate(DockerLauncher launcher,
+                           AbstractBuild build) throws IOException, InterruptedException {
+        //No-op, sub-classes should override
     }
 
     /**

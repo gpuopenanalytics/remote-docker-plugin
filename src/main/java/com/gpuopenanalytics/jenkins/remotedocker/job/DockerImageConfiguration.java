@@ -28,7 +28,6 @@ import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -91,19 +90,6 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
 
         args.add(Utils.resolveVariables(
                 build.getBuildVariableResolver(), getImage()));
-    }
-
-    @Override
-    public void postCreate(DockerLauncher launcher,
-                           AbstractBuild build) throws IOException, InterruptedException {
-        super.postCreate(launcher, build);
-    }
-
-    @Override
-    public void addRunArgs(DockerLauncher launcher,
-                           ArgumentListBuilder args,
-                           AbstractBuild build) {
-        super.addRunArgs(launcher, args, build);
     }
 
     @Extension
