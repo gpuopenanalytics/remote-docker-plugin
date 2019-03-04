@@ -38,6 +38,9 @@ public interface DockerConfiguration {
      *
      * @param launcher
      * @param localWorkspace
+     *
+     * @throws IOException
+     * @throws InterruptedException
      */
     void setupImage(DockerLauncher launcher,
                     String localWorkspace) throws IOException, InterruptedException;

@@ -92,7 +92,6 @@ public class Utils {
      *
      * @param s
      * @return
-     * @throws IOException
      */
     public static Properties parsePropertiesString(String s) {
         try {

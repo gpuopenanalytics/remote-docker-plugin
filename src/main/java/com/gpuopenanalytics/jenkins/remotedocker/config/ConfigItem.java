@@ -53,6 +53,9 @@ public abstract class ConfigItem extends AbstractDescribableImpl<ConfigItem> imp
      *
      * @param launcher
      * @param build
+     *
+     * @throws IOException
+     * @throws InterruptedException
      */
     public void postCreate(DockerLauncher launcher,
                            AbstractBuild build) throws IOException, InterruptedException {
