@@ -37,7 +37,9 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Main entrypoint for the plugin. This wraps a build, decorating the {@link
@@ -53,7 +55,8 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
     public RemoteDockerBuildWrapper(AbstractDockerConfiguration dockerConfiguration,
                                     List<SideDockerConfiguration> sideDockerConfigurations) {
         this.dockerConfiguration = dockerConfiguration;
-        this.sideDockerConfigurations = sideDockerConfigurations;
+        this.sideDockerConfigurations = Optional.ofNullable(sideDockerConfigurations)
+                .orElse(Collections.emptyList());
     }
 
     public AbstractDockerConfiguration getDockerConfiguration() {

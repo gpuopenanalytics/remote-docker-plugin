@@ -22,9 +22,11 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Proc;
 import hudson.model.AbstractBuild;
+import hudson.model.Computer;
 import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.util.ArgumentListBuilder;
+import jenkins.model.Jenkins;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -32,6 +34,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -123,18 +127,22 @@ public class DockerLauncher extends Launcher {
         String workspacePath = build.getWorkspace().getRemote();
         //Fully resolve the source workspace
         String workspaceSrc = Paths.get(workspacePath)
-                .toRealPath()
                 .toAbsolutePath()
                 .toString();
 
         config.setupImage(this, workspaceSrc);
 
-        String tmpDest = System.getProperty("java.io.tmpdir");
-        //This is a workaround on macOS where /var is a link to /private/var
-        // but the symbolic link is not passed into the docker VM
-        String tmpSrc = Paths.get(tmpDest)
-                .toRealPath()
-                .toAbsolutePath()
+        Computer computer = build.getWorkspace().toComputer();
+        String tmpDest = computer.getSystemProperties().get("java.io.tmpdir")
+                .toString();
+        Path tmpSrcPath = Paths.get(tmpDest);
+        if (computer instanceof Jenkins.MasterComputer
+                && Files.exists(tmpSrcPath)) {
+            //This is a workaround on macOS where /var is a link to /private/var
+            // but the symbolic link is not passed into the docker VM
+            tmpSrcPath = tmpSrcPath.toRealPath();
+        }
+        String tmpSrc = tmpSrcPath.toAbsolutePath()
                 .toString();
 
         //TODO Set name? Maybe with build.toString().replaceAll("^\\w", "_")
