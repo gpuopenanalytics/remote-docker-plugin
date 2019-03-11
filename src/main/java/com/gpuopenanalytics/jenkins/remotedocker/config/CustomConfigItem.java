@@ -69,8 +69,7 @@ public abstract class CustomConfigItem extends ConfigItem {
     }
 
     public String getResolvedValue(AbstractBuild<?,?> build) {
-        return Utils.resolveVariables(
-                build.getBuildVariableResolver(), getValue());
+        return Utils.resolveVariables(build, getValue());
     }
 
     /**

@@ -88,8 +88,7 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
         getVolumes().stream()
                 .forEach(item -> item.addArgs(args, build));
 
-        args.add(Utils.resolveVariables(
-                build.getBuildVariableResolver(), getImage()));
+        args.add(Utils.resolveVariables(build, getImage()));
     }
 
     @Extension
