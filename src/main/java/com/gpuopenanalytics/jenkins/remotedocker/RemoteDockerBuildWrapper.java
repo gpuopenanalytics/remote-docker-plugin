@@ -34,7 +34,6 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor;
-import hudson.model.FreeStyleProject;
 import hudson.model.Run;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
@@ -56,15 +55,23 @@ import java.util.Optional;
  */
 public class RemoteDockerBuildWrapper extends BuildWrapper {
 
+    private boolean debug;
     private AbstractDockerConfiguration dockerConfiguration;
     private List<SideDockerConfiguration> sideDockerConfigurations;
 
     @DataBoundConstructor
-    public RemoteDockerBuildWrapper(AbstractDockerConfiguration dockerConfiguration,
+    public RemoteDockerBuildWrapper(boolean debug,
+                                    AbstractDockerConfiguration dockerConfiguration,
                                     List<SideDockerConfiguration> sideDockerConfigurations) {
+        this.debug = debug;
         this.dockerConfiguration = dockerConfiguration;
-        this.sideDockerConfigurations = Optional.ofNullable(sideDockerConfigurations)
+        this.sideDockerConfigurations = Optional.ofNullable(
+                sideDockerConfigurations)
                 .orElse(Collections.emptyList());
+    }
+
+    public boolean isDebug() {
+        return debug;
     }
 
     public AbstractDockerConfiguration getDockerConfiguration() {
@@ -79,13 +86,14 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
     public Launcher decorateLauncher(AbstractBuild build,
                                      Launcher launcher,
                                      BuildListener listener) throws Run.RunnerAbortedException {
-        return new DockerLauncher(build, launcher, listener, this);
+        return new DockerLauncher(debug, build, launcher, listener, this);
     }
 
     @Override
     public Environment setUp(AbstractBuild build,
                              Launcher launcher,
                              BuildListener listener) throws IOException, InterruptedException {
+        build.addAction(new DockerAction());
         try {
             ((DockerLauncher) launcher).launchContainers();
             return new DockerEnvironment((DockerLauncher) launcher);
@@ -121,12 +129,12 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
 
         @Override
         public boolean isApplicable(AbstractProject<?, ?> item) {
-            return item instanceof FreeStyleProject;
+            return true;
         }
 
         @Override
         public String getDisplayName() {
-            return "Build with Docker on Node";
+            return "Run build inside a Docker container";
         }
 
         @Override

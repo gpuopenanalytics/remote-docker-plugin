@@ -55,6 +55,7 @@ import java.util.Optional;
  */
 public class DockerLauncher extends Launcher {
 
+    private boolean debug;
     private Launcher delegate;
     private TaskListener listener;
     private RemoteDockerBuildWrapper buildWrapper;
@@ -72,11 +73,13 @@ public class DockerLauncher extends Launcher {
      * @param buildWrapper the {@link RemoteDockerBuildWrapper} currently
      *                     running
      */
-    public DockerLauncher(AbstractBuild build,
+    public DockerLauncher(boolean debug,
+                          AbstractBuild build,
                           Launcher delegate,
                           TaskListener listener,
                           RemoteDockerBuildWrapper buildWrapper) {
         super(delegate);
+        this.debug = debug;
         this.build = build;
         this.delegate = delegate;
         this.listener = listener;
@@ -190,10 +193,10 @@ public class DockerLauncher extends Launcher {
             throw new IOException("Failed to start docker image");
         }
         containerIds.add(containerId);
-        config.postCreate(this, build);
         if (isMain) {
             mainContainerId = containerId;
         }
+        config.postCreate(this, build);
     }
 
     /**
@@ -213,7 +216,7 @@ public class DockerLauncher extends Launcher {
                 //TODO I think we should pass something here
                 //.envs()
                 .cmds(args)
-                .quiet(false);
+                .quiet(!debug);
     }
 
     /**

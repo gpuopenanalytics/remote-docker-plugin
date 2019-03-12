@@ -23,32 +23,6 @@
   ~ THE SOFTWARE.
   -->
 
-<j:jelly xmlns:j="jelly:core"
-         xmlns:f="/lib/form"
-         xmlns:st="jelly:stapler">
-
-    <st:include page="main-config.jelly" class="${descriptor.clazz}" optional="false"/>
-
-    <f:advanced>
-        <f:section title="Advanced Settings">
-
-            <f:entry title="Debug" field="debug">
-                <f:checkbox/>
-            </f:entry>
-
-            <st:include page="advanced-config.jelly" class="${descriptor.clazz}" optional="true"/>
-
-            <f:entry title="Additional Settings">
-                <f:repeatableHeteroProperty field="configItemList"
-                                            addCaption="Add" deleteCaption="Delete" hasHeader="true" oneEach="true"/>
-            </f:entry>
-            <f:entry title="Manage Volumes">
-                <f:repeatableProperty field="volumes" minimum="0" header="Volume" var="item" add="Add Volume">
-                    <f:repeatableDeleteButton/>
-                </f:repeatableProperty>
-            </f:entry>
-        </f:section>
-    </f:advanced>
-
+<j:jelly xmlns:j="jelly:core">
+    <img title="Built inside Docker container" src="${rootURL}/plugin/remote-docker-plugin/images/16x16/docker.png"/>
 </j:jelly>
-
