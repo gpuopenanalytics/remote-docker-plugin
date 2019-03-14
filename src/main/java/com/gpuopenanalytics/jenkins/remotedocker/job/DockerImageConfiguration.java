@@ -29,6 +29,7 @@ import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import com.gpuopenanalytics.jenkins.remotedocker.config.ConfigItem;
 import com.gpuopenanalytics.jenkins.remotedocker.config.VolumeConfiguration;
 import hudson.Extension;
+import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
@@ -36,6 +37,7 @@ import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -80,17 +82,28 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
 
     @Override
     public void setupImage(DockerLauncher launcher,
-                           String localWorkspace) {
-        //No-op
+                           String localWorkspace) throws IOException, InterruptedException {
+        if (isForcePull()) {
+            ArgumentListBuilder args = new ArgumentListBuilder();
+            String image = Utils.resolveVariables(launcher.getBuild(),
+                                                  getImage());
+            args.add("docker", "pull", image);
+            Launcher.ProcStarter proc = launcher.executeCommand(args)
+                    .stderr(launcher.getListener().getLogger());
+            if (launcher.isDebug()) {
+                proc = proc.stdout(launcher.getListener());
+            }
+            int status = proc.join();
+            if (status != 0) {
+                throw new IOException("Could not pull image: " + image);
+            }
+        }
     }
 
     @Override
     public void addCreateArgs(DockerLauncher launcher,
                               ArgumentListBuilder args,
                               AbstractBuild build) {
-        if (isForcePull()) {
-            args.add("--pull");
-        }
         getConfigItemList().stream()
                 .forEach(item -> item.addCreateArgs(launcher, args, build));
         getVolumes().stream()

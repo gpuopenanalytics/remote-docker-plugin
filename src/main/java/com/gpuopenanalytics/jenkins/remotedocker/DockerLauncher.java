@@ -319,4 +319,8 @@ public class DockerLauncher extends Launcher {
     public AbstractBuild getBuild() {
         return build;
     }
+
+    public boolean isDebug() {
+        return debug;
+    }
 }
