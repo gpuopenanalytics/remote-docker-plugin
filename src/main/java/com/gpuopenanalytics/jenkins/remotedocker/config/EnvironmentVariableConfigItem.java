@@ -51,6 +51,10 @@ public class EnvironmentVariableConfigItem extends ConfigItem {
         //no-op
     }
 
+    public String getEnvironment() {
+        return environment;
+    }
+
     @Override
     public void addCreateArgs(DockerLauncher launcher,
                               ArgumentListBuilder args,

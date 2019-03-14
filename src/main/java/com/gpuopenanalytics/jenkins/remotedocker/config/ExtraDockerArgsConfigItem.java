@@ -49,6 +49,10 @@ public class ExtraDockerArgsConfigItem extends ConfigItem {
         this.extraArgs = extraArgs;
     }
 
+    public String getExtraArgs() {
+        return extraArgs;
+    }
+
     @Override
     public void validate() throws Descriptor.FormException {
 

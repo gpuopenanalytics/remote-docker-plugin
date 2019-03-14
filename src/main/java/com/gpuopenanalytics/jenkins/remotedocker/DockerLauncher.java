@@ -159,7 +159,6 @@ public class DockerLauncher extends Launcher {
         //TODO Set name? Maybe with build.toString().replaceAll("^\\w", "_")
         ArgumentListBuilder args = new ArgumentListBuilder()
                 .add("run", "-t", "-d")
-                .add("--env", "TMPDIR=" + workspacePath + ".tmp")
                 .add("--workdir", workspacePath)
                 //Add bridge network for internet access
                 .add("--network", "bridge");

@@ -25,7 +25,7 @@
 
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
-    <f:radioBlock name="dockerRuntime" value="runc" title="runc - Standard Docker runtime (default)" inline="true" checked="${instance.getValue()=='runc'}" />
+    <f:radioBlock name="dockerRuntime" value="runc" title="runc - Standard Docker runtime (default)" inline="true" checked="${instance.getValue()=='runc' or empty(instance.getValue())}" />
     <f:radioBlock name="dockerRuntime" value="nvidia" title="nvidia - Enable NVIDIA GPU support with nvidia-docker" inline="true" checked="${instance.getValue()=='nvidia'}" />
     <f:radioBlock name="dockerRuntime" value="custom" title="custom - Define which runtime to use" inline="true" checked="${instance.isCustom()}">
         <f:entry title="Custom runtime to use" field="dockerRuntimeCustom">

@@ -50,6 +50,10 @@ public class MemoryConfigItem extends ConfigItem {
         this.memory = memory;
     }
 
+    public String getMemory() {
+        return memory;
+    }
+
     @Override
     public void validate() throws Descriptor.FormException {
         if (!Utils.hasVariablesToResolve(memory)) {
