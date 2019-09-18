@@ -141,27 +141,27 @@ public class DockerFileConfiguration extends AbstractDockerConfiguration {
         if (StringUtils.isNotEmpty(buildArgs)) {
             Properties props = Utils.parsePropertiesString(buildArgs);
             for (String key : props.stringPropertyNames()) {
-                String value = Utils.resolveVariables(build,
+                String value = Utils.resolveVariables(launcher,
                                                       props.getProperty(key));
                 args.add("--build-arg");
                 args.addKeyValuePair("", key, value, false);
             }
         }
         if (StringUtils.isNotEmpty(tag)) {
-            image = Utils.resolveVariables(build, tag);
+            image = Utils.resolveVariables(launcher, tag);
         } else {
             image = UUID.randomUUID().toString();
         }
         args.add("-t", image);
 
-        String dockerFilePath = Utils.resolveVariables(build, dockerFile);
+        String dockerFilePath = Utils.resolveVariables(launcher, dockerFile);
         Path path = Paths.get(dockerFilePath);
         if (!path.isAbsolute()) {
             path = Paths.get(localWorkspace, dockerFilePath);
         }
         args.add("-f", path.toString());
         if (StringUtils.isNotEmpty(context)) {
-            args.add(Utils.resolveVariables(build, context));
+            args.add(Utils.resolveVariables(launcher, context));
         } else {
             args.add(build.getWorkspace().getRemote());
         }
@@ -182,7 +182,7 @@ public class DockerFileConfiguration extends AbstractDockerConfiguration {
         getConfigItemList().stream()
                 .forEach(item -> item.addCreateArgs(launcher, args, build));
         getVolumes().stream()
-                .forEach(item -> item.addArgs(args, build));
+                .forEach(item -> item.addArgs(args, launcher));
         args.add(image);
     }
 
