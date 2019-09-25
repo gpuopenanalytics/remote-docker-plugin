@@ -81,7 +81,7 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
                 throw new RuntimeException(e);
             }
         } else {
-            args.addKeyValuePair("", ENV_VAR_NAME, getResolvedValue(build),
+            args.addKeyValuePair("", ENV_VAR_NAME, getResolvedValue(launcher),
                                  false);
         }
     }

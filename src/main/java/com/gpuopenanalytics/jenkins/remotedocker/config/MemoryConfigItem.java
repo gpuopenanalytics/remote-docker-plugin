@@ -69,8 +69,7 @@ public class MemoryConfigItem extends ConfigItem {
     public void addCreateArgs(DockerLauncher launcher,
                               ArgumentListBuilder args,
                               AbstractBuild build) {
-        args.add("-m", Utils.resolveVariables(
-                build.getBuildVariableResolver(), memory).toUpperCase());
+        args.add("-m", Utils.resolveVariables(launcher, memory).toUpperCase());
     }
 
     @Extension

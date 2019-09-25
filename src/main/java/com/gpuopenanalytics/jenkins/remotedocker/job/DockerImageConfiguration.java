@@ -85,8 +85,7 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
                            String localWorkspace) throws IOException, InterruptedException {
         if (isForcePull()) {
             ArgumentListBuilder args = new ArgumentListBuilder();
-            String image = Utils.resolveVariables(launcher.getBuild(),
-                                                  getImage());
+            String image = Utils.resolveVariables(launcher, getImage());
             args.add("docker", "pull", image);
             Launcher.ProcStarter proc = launcher.executeCommand(args)
                     .stderr(launcher.getListener().getLogger());
@@ -107,9 +106,9 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
         getConfigItemList().stream()
                 .forEach(item -> item.addCreateArgs(launcher, args, build));
         getVolumes().stream()
-                .forEach(item -> item.addArgs(args, build));
+                .forEach(item -> item.addArgs(args, launcher));
 
-        args.add(Utils.resolveVariables(build, getImage()));
+        args.add(Utils.resolveVariables(launcher, getImage()));
     }
 
     @Extension

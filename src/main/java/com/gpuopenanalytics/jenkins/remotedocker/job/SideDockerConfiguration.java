@@ -75,7 +75,7 @@ public class SideDockerConfiguration extends AbstractDescribableImpl<SideDockerC
     public void addCreateArgs(DockerLauncher launcher,
                               ArgumentListBuilder args,
                               AbstractBuild build) {
-        args.add("--name", Utils.resolveVariables(build, name));
+        args.add("--name", Utils.resolveVariables(launcher, name));
         dockerConfiguration.addCreateArgs(launcher, args, build);
     }
 

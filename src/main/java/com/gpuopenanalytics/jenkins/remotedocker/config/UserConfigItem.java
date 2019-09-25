@@ -119,9 +119,9 @@ public class UserConfigItem extends ConfigItem {
     public void postCreate(DockerLauncher launcher,
                            AbstractBuild build) throws IOException, InterruptedException {
         if (!isExisting() && !"root".equals(username)) {
-            String gid = Utils.resolveVariables(build, this.gid);
-            String uid = Utils.resolveVariables(build, this.uid);
-            String username = Utils.resolveVariables(build, this.username);
+            String gid = Utils.resolveVariables(launcher, this.gid);
+            String uid = Utils.resolveVariables(launcher, this.uid);
+            String username = Utils.resolveVariables(launcher, this.username);
 
             ArgumentListBuilder groupAddArgs = new ArgumentListBuilder();
             groupAddArgs.add("groupadd", "-g", gid, username);
@@ -143,7 +143,7 @@ public class UserConfigItem extends ConfigItem {
     public void addRunArgs(DockerLauncher launcher,
                            ArgumentListBuilder args,
                            AbstractBuild build) {
-        args.add("--user", Utils.resolveVariables(build, username));
+        args.add("--user", Utils.resolveVariables(launcher, username));
     }
 
     @Extension

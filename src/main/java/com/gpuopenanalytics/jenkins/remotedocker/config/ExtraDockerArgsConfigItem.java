@@ -64,7 +64,7 @@ public class ExtraDockerArgsConfigItem extends ConfigItem {
                               AbstractBuild build) {
         List<String> newArgs = Stream.of(
                 QuotedStringTokenizer.tokenize(extraArgs))
-                .map(s -> Utils.resolveVariables(build, s))
+                .map(s -> Utils.resolveVariables(launcher, s))
                 .collect(Collectors.toList());
         args.add(newArgs);
     }

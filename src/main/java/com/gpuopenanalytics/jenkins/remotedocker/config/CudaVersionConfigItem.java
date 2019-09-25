@@ -79,7 +79,7 @@ public class CudaVersionConfigItem extends ConfigItem {
                               ArgumentListBuilder args,
                               AbstractBuild build) {
         args.add("-e");
-        String cuda = Utils.resolveVariables(build, nvidiaCuda);
+        String cuda = Utils.resolveVariables(launcher, nvidiaCuda);
         args.addKeyValuePair("", ENV_VAR_NAME, "cuda>="+cuda, false);
     }
 
