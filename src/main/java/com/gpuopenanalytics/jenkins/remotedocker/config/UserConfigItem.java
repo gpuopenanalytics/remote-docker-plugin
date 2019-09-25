@@ -59,7 +59,13 @@ public class UserConfigItem extends ConfigItem {
 
     public boolean isExisting() {
         return !isCustom()
-                && !("jenkins".equals(username) || "root".equals(username));
+                && !("jenkins".equals(username)
+                || "root".equals(username)
+                || "current".equals(username));
+    }
+
+    public boolean isCurrentUser() {
+        return "current".equals(username);
     }
 
     public boolean isCustom() {
@@ -84,7 +90,7 @@ public class UserConfigItem extends ConfigItem {
             throw new Descriptor.FormException("Username cannot be empty",
                                                "username");
         }
-        if (!isExisting()) {
+        if (!isExisting() && !isCurrentUser()) {
             if (StringUtils.isEmpty(uid)) {
                 throw new Descriptor.FormException("UID cannot be empty",
                                                    "uid");
@@ -118,7 +124,7 @@ public class UserConfigItem extends ConfigItem {
     @Override
     public void postCreate(DockerLauncher launcher,
                            AbstractBuild build) throws IOException, InterruptedException {
-        if (!isExisting() && !"root".equals(username)) {
+        if (!isExisting() && !"root".equals(username) && !isCurrentUser()) {
             String gid = Utils.resolveVariables(launcher, this.gid);
             String uid = Utils.resolveVariables(launcher, this.uid);
             String username = Utils.resolveVariables(launcher, this.username);
@@ -143,7 +149,14 @@ public class UserConfigItem extends ConfigItem {
     public void addRunArgs(DockerLauncher launcher,
                            ArgumentListBuilder args,
                            AbstractBuild build) {
-        args.add("--user", Utils.resolveVariables(launcher, username));
+        if (!isCurrentUser()) {
+            args.add("--user", Utils.resolveVariables(launcher, username));
+        } else {
+            com.sun.security.auth.module.UnixSystem unix = new com.sun.security.auth.module.UnixSystem();
+            long uid = unix.getUid();
+            long gid = unix.getGid();
+            args.add("--user", uid + ":" + gid);
+        }
     }
 
     @Extension
