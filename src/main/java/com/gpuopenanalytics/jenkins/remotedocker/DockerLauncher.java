@@ -24,15 +24,18 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker;
 
+import com.google.common.collect.ImmutableList;
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfiguration;
 import com.gpuopenanalytics.jenkins.remotedocker.job.SideDockerConfiguration;
+import com.gpuopenanalytics.jenkins.remotedocker.pipeline.DockerState;
+import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Proc;
-import hudson.model.AbstractBuild;
 import hudson.model.Computer;
 import hudson.model.TaskListener;
 import hudson.remoting.Channel;
+import hudson.slaves.WorkspaceList;
 import hudson.util.ArgumentListBuilder;
 import jenkins.model.Jenkins;
 
@@ -46,6 +49,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,37 +57,54 @@ import java.util.Optional;
 /**
  * A Jenkins {@link Launcher} that delegates into a running docker container
  */
-public class DockerLauncher extends Launcher {
+public class DockerLauncher extends AbstractDockerLauncher {
 
     private boolean debug;
     private Launcher delegate;
     private TaskListener listener;
     private RemoteDockerBuildWrapper buildWrapper;
-    private AbstractBuild build;
+    private EnvVars environment;
+    private Computer node;
+    private FilePath workspace;
 
     private transient Optional<DockerNetwork> network = Optional.empty();
     private transient List<String> containerIds = new ArrayList<>();
     private transient String mainContainerId;
 
     /**
-     * @param build        the specific build job that this container is
-     *                     running for
+     * @param environment
+     * @param node
+     * @param workspace
      * @param delegate     the launcher on the node executing the job
      * @param listener     listener for logging
      * @param buildWrapper the {@link RemoteDockerBuildWrapper} currently
      *                     running
      */
     public DockerLauncher(boolean debug,
-                          AbstractBuild build,
+                          EnvVars environment,
+                          Computer node,
+                          FilePath workspace,
                           Launcher delegate,
                           TaskListener listener,
                           RemoteDockerBuildWrapper buildWrapper) {
         super(delegate);
         this.debug = debug;
-        this.build = build;
+        this.environment = environment;
+        this.node = node;
+        this.workspace = workspace;
         this.delegate = delegate;
         this.listener = listener;
         this.buildWrapper = buildWrapper;
+    }
+
+    public static DockerLauncher decorateExistingContainers(DockerLauncher launcher,
+                                                            String mainContainerId,
+                                                            Collection<String> containerIds,
+                                                            Optional<String> networkId) {
+        launcher.mainContainerId = mainContainerId;
+        launcher.containerIds = new ArrayList<>(containerIds);
+        launcher.network = networkId.map(DockerNetwork::fromExisting);
+        return launcher;
     }
 
     @Override
@@ -110,7 +131,7 @@ public class DockerLauncher extends Launcher {
      * @throws IOException
      * @throws InterruptedException
      */
-    public void launchContainers() throws IOException, InterruptedException {
+    public DockerState launchContainers() throws IOException, InterruptedException {
         if (!buildWrapper.getSideDockerConfigurations().isEmpty()) {
             //There are side container, so create a network
             network = Optional.of(DockerNetwork.create(this));
@@ -123,7 +144,7 @@ public class DockerLauncher extends Launcher {
         //Launch main container
         DockerConfiguration main = buildWrapper.getDockerConfiguration();
         launchContainer(main, true);
-
+        return new DockerState(debug, containerIds, network);
     }
 
     /**
@@ -135,7 +156,7 @@ public class DockerLauncher extends Launcher {
      */
     private ArgumentListBuilder getlaunchArgs(DockerConfiguration config,
                                               boolean isMain) throws IOException, InterruptedException {
-        String workspacePath = build.getWorkspace().getRemote();
+        String workspacePath = workspace.getRemote();
         //Fully resolve the source workspace
         String workspaceSrc = Paths.get(workspacePath)
                 .toAbsolutePath()
@@ -143,11 +164,10 @@ public class DockerLauncher extends Launcher {
 
         config.setupImage(this, workspaceSrc);
 
-        Computer computer = build.getWorkspace().toComputer();
-        String tmpDest = computer.getSystemProperties().get("java.io.tmpdir")
+        String tmpDest = node.getSystemProperties().get("java.io.tmpdir")
                 .toString();
         Path tmpSrcPath = Paths.get(tmpDest);
-        if (computer instanceof Jenkins.MasterComputer
+        if (node instanceof Jenkins.MasterComputer
                 && Files.exists(tmpSrcPath)) {
             //This is a workaround on macOS where /var is a link to /private/var
             // but the symbolic link is not passed into the docker VM
@@ -166,13 +186,18 @@ public class DockerLauncher extends Launcher {
         network.ifPresent(net -> net.addArgs(args));
 
         if (isMain) {
+            String secondaryTempPath = WorkspaceList.tempDir(workspace).getRemote();
+            String secondaryTempSrc = Paths.get(secondaryTempPath)
+                    .toAbsolutePath()
+                    .toString();
             //Start a shell to block the container, overriding the entrypoint in case the image already defines that
             args.add("--entrypoint", "/bin/sh")
                     .add("-v", workspaceSrc + ":" + workspacePath)
                     ////Jenkins puts scripts here
-                    .add("-v", tmpSrc + ":" + tmpDest);
+                    .add("-v", tmpSrc + ":" + tmpDest)
+                    .add("-v", secondaryTempSrc+":"+secondaryTempPath);
         }
-        config.addCreateArgs(this, args, build);
+        config.addCreateArgs(this, args);
         return args;
     }
 
@@ -195,43 +220,7 @@ public class DockerLauncher extends Launcher {
         if (isMain) {
             mainContainerId = containerId;
         }
-        config.postCreate(this, build);
-    }
-
-    /**
-     * Execute a docker command
-     *
-     * @param args
-     * @return
-     */
-    public Launcher.ProcStarter executeCommand(ArgumentListBuilder args) {
-        if (args.toList().isEmpty()) {
-            throw new IllegalArgumentException("No args given");
-        }
-        if (!"docker".equals(args.toList().get(0))) {
-            args.prepend("docker");
-        }
-        return delegate.launch()
-                //TODO I think we should pass something here
-                //.envs()
-                .cmds(args)
-                .quiet(!debug);
-    }
-
-    /**
-     * Invoke <code>docker exec</code> on the already created container.
-     *
-     * @param args
-     * @param addRunArgs
-     * @return
-     * @throws IOException
-     */
-    public Proc dockerExec(ArgumentListBuilder args,
-                           boolean addRunArgs) throws IOException {
-        Launcher.ProcStarter starter = this.new ProcStarter();
-        starter.stderr(listener.getLogger());
-        starter.cmds(args);
-        return dockerExec(starter, addRunArgs);
+        config.postCreate(this);
     }
 
     /**
@@ -254,7 +243,7 @@ public class DockerLauncher extends Launcher {
             args.add("--workdir", starter.pwd().getRemote());
         }
         if (addRunArgs) {
-            buildWrapper.getDockerConfiguration().addRunArgs(this, args, build);
+            buildWrapper.getDockerConfiguration().addRunArgs(this, args);
         }
 
         args.add(mainContainerId);
@@ -316,11 +305,31 @@ public class DockerLauncher extends Launcher {
         return listener;
     }
 
-    public AbstractBuild getBuild() {
-        return build;
+    public EnvVars getEnvironment() {
+        return environment;
+    }
+
+    public Computer getNode() {
+        return node;
+    }
+
+    public FilePath getWorkspace() {
+        return workspace;
     }
 
     public boolean isDebug() {
         return debug;
+    }
+
+    public Optional<DockerNetwork> getNetwork() {
+        return network;
+    }
+
+    public List<String> getContainerIds() {
+        return ImmutableList.copyOf(containerIds);
+    }
+
+    public String getMainContainerId() {
+        return mainContainerId;
     }
 }

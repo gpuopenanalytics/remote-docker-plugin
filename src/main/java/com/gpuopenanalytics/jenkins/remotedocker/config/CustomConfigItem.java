@@ -24,7 +24,7 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 
 import java.util.Objects;
@@ -76,7 +76,7 @@ public abstract class CustomConfigItem extends ConfigItem {
         return customValue.orElse(value);
     }
 
-    public String getResolvedValue(DockerLauncher launcher) {
+    public String getResolvedValue(AbstractDockerLauncher launcher) {
         return Utils.resolveVariables(launcher, getValue());
     }
 

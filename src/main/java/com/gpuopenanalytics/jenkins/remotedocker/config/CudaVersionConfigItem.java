@@ -25,10 +25,9 @@
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
 import com.google.common.collect.ImmutableList;
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
-import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.ListBoxModel;
@@ -75,9 +74,8 @@ public class CudaVersionConfigItem extends ConfigItem {
     }
 
     @Override
-    public void addCreateArgs(DockerLauncher launcher,
-                              ArgumentListBuilder args,
-                              AbstractBuild build) {
+    public void addCreateArgs(AbstractDockerLauncher launcher,
+                              ArgumentListBuilder args) {
         args.add("-e");
         String cuda = Utils.resolveVariables(launcher, nvidiaCuda);
         args.addKeyValuePair("", ENV_VAR_NAME, "cuda>="+cuda, false);

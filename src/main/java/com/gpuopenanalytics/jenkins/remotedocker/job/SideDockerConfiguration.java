@@ -24,10 +24,9 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.job;
 
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
@@ -66,31 +65,28 @@ public class SideDockerConfiguration extends AbstractDescribableImpl<SideDockerC
     }
 
     @Override
-    public void setupImage(DockerLauncher launcher,
+    public void setupImage(AbstractDockerLauncher launcher,
                            String localWorkspace) throws IOException, InterruptedException {
         //no-op
     }
 
     @Override
-    public void addCreateArgs(DockerLauncher launcher,
-                              ArgumentListBuilder args,
-                              AbstractBuild build) {
+    public void addCreateArgs(AbstractDockerLauncher launcher,
+                              ArgumentListBuilder args) {
         args.add("--name", Utils.resolveVariables(launcher, name));
-        dockerConfiguration.addCreateArgs(launcher, args, build);
+        dockerConfiguration.addCreateArgs(launcher, args);
     }
 
     @Override
-    public void postCreate(DockerLauncher launcher,
-                           AbstractBuild build) throws IOException, InterruptedException {
-        dockerConfiguration.postCreate(launcher, build);
+    public void postCreate(AbstractDockerLauncher launcher) throws IOException, InterruptedException {
+        dockerConfiguration.postCreate(launcher);
     }
 
 
     @Override
-    public void addRunArgs(DockerLauncher launcher,
-                           ArgumentListBuilder args,
-                           AbstractBuild build) {
-        dockerConfiguration.addRunArgs(launcher, args, build);
+    public void addRunArgs(AbstractDockerLauncher launcher,
+                           ArgumentListBuilder args) {
+        dockerConfiguration.addRunArgs(launcher, args);
     }
 
     @Extension

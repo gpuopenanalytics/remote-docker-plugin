@@ -86,7 +86,16 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
     public Launcher decorateLauncher(AbstractBuild build,
                                      Launcher launcher,
                                      BuildListener listener) throws Run.RunnerAbortedException {
-        return new DockerLauncher(debug, build, launcher, listener, this);
+        try {
+            return new DockerLauncher(debug, build.getEnvironment(listener),
+                                      build.getWorkspace().toComputer(),
+                                      build.getWorkspace(),
+                                      launcher,
+                                      listener,
+                                      this);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

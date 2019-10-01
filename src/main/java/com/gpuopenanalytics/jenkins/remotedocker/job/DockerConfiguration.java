@@ -24,14 +24,14 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.job;
 
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
-import hudson.model.AbstractBuild;
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 
 import java.io.IOException;
+import java.io.Serializable;
 
-public interface DockerConfiguration {
+public interface DockerConfiguration extends Serializable {
 
     /**
      * Validate the correctness of the configuration.
@@ -50,36 +50,31 @@ public interface DockerConfiguration {
      * @throws IOException
      * @throws InterruptedException
      */
-    void setupImage(DockerLauncher launcher,
+    void setupImage(AbstractDockerLauncher launcher,
                     String localWorkspace) throws IOException, InterruptedException;
 
     /**
      * Add args to the <code>docker create</code>
-     *
      * @param launcher
      * @param args
-     * @param build
      */
-    void addCreateArgs(DockerLauncher launcher,
-                       ArgumentListBuilder args,
-                       AbstractBuild build);
+    void addCreateArgs(AbstractDockerLauncher launcher,
+                       ArgumentListBuilder args);
 
     /**
      * Runs after the container is running, but before the build executes
-     *
      * @param launcher
-     * @param build
+     *
      */
-    void postCreate(DockerLauncher launcher,
-                    AbstractBuild build) throws IOException, InterruptedException;
+    void postCreate(AbstractDockerLauncher launcher) throws IOException, InterruptedException;
 
     /**
      * Add the arguments to <code>docker exec</code> command that actually
      * executes the build
      *
+     * @param launcher
      * @param args
      */
-    void addRunArgs(DockerLauncher launcher,
-                    ArgumentListBuilder args,
-                    AbstractBuild build);
+    void addRunArgs(AbstractDockerLauncher launcher,
+                    ArgumentListBuilder args);
 }

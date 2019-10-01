@@ -24,6 +24,7 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
@@ -115,15 +116,13 @@ public class UserConfigItem extends ConfigItem {
     }
 
     @Override
-    public void addCreateArgs(DockerLauncher launcher,
-                              ArgumentListBuilder args,
-                              AbstractBuild build) {
+    public void addCreateArgs(AbstractDockerLauncher launcher,
+                              ArgumentListBuilder args) {
         //No-op
     }
 
     @Override
-    public void postCreate(DockerLauncher launcher,
-                           AbstractBuild build) throws IOException, InterruptedException {
+    public void postCreate(AbstractDockerLauncher launcher) throws IOException, InterruptedException {
         if (!isExisting() && !"root".equals(username) && !isCurrentUser()) {
             String gid = Utils.resolveVariables(launcher, this.gid);
             String uid = Utils.resolveVariables(launcher, this.uid);
@@ -146,9 +145,8 @@ public class UserConfigItem extends ConfigItem {
     }
 
     @Override
-    public void addRunArgs(DockerLauncher launcher,
-                           ArgumentListBuilder args,
-                           AbstractBuild build) {
+    public void addRunArgs(AbstractDockerLauncher launcher,
+                           ArgumentListBuilder args) {
         if (!isCurrentUser()) {
             args.add("--user", Utils.resolveVariables(launcher, username));
         } else {

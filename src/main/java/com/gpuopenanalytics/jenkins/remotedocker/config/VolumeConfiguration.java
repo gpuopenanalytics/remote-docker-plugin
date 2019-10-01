@@ -24,6 +24,7 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
@@ -34,11 +35,13 @@ import hudson.util.ArgumentListBuilder;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.Serializable;
+
 /**
  * Hint that allows for custom volumes to mount for Docker container.
  * Needed for testing large datasets, and to save results.
  */
-public class VolumeConfiguration extends AbstractDescribableImpl<VolumeConfiguration> implements ExtensionPoint {
+public class VolumeConfiguration extends AbstractDescribableImpl<VolumeConfiguration> implements ExtensionPoint, Serializable {
 
     private static final String READ_ONLY_FLAG = "ro";
     private static final String READ_WRITE_FLAG = "rw";
@@ -69,7 +72,7 @@ public class VolumeConfiguration extends AbstractDescribableImpl<VolumeConfigura
         return readOnly;
     }
 
-    private String getDockerArgument(DockerLauncher launcher) {
+    private String getDockerArgument(AbstractDockerLauncher launcher) {
         String readType = readOnly ? READ_ONLY_FLAG : READ_WRITE_FLAG;
         return String.join(":", Utils.resolveVariables(launcher, hostPath),
                            Utils.resolveVariables(launcher, destPath),
@@ -88,7 +91,7 @@ public class VolumeConfiguration extends AbstractDescribableImpl<VolumeConfigura
         }
     }
 
-    public void addArgs(ArgumentListBuilder args, DockerLauncher launcher) {
+    public void addArgs(ArgumentListBuilder args, AbstractDockerLauncher launcher) {
         args.add("-v", getDockerArgument(launcher));
     }
 

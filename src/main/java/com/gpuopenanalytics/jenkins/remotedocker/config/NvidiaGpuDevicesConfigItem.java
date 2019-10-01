@@ -24,15 +24,12 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import hudson.Extension;
-import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
-
-import java.io.IOException;
 
 /**
  * Defines which GPU devices are visible in the container. Passes
@@ -67,19 +64,13 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
     }
 
     @Override
-    public void addCreateArgs(DockerLauncher launcher,
-                              ArgumentListBuilder args,
-                              AbstractBuild build) {
+    public void addCreateArgs(AbstractDockerLauncher launcher,
+                              ArgumentListBuilder args) {
         args.add("-e");
         if ("executor".equals(getValue())) {
-            try {
-                String index = build.getEnvironment(launcher.getListener())
-                        .get("EXECUTOR_NUMBER", null);
+                String index = launcher.getEnvironment().get("EXECUTOR_NUMBER");
                 args.addKeyValuePair("", ENV_VAR_NAME, index,
                                      false);
-            } catch (IOException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
         } else {
             args.addKeyValuePair("", ENV_VAR_NAME, getResolvedValue(launcher),
                                  false);

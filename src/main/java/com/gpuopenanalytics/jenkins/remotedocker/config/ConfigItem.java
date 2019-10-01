@@ -24,19 +24,19 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import hudson.ExtensionPoint;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * Represents a configuration to the <code>docker create</code> command.
  */
-public abstract class ConfigItem extends AbstractDescribableImpl<ConfigItem> implements ExtensionPoint {
+public abstract class ConfigItem extends AbstractDescribableImpl<ConfigItem> implements ExtensionPoint, Serializable {
 
     /**
      * Validate the input. Throw a {@link Descriptor.FormException} for any
@@ -48,38 +48,31 @@ public abstract class ConfigItem extends AbstractDescribableImpl<ConfigItem> imp
 
     /**
      * Add the arguments to <code>docker create</code>
-     *
      * @param launcher
      * @param args
      */
-    public abstract void addCreateArgs(DockerLauncher launcher,
-                                       ArgumentListBuilder args,
-                                       AbstractBuild build);
+    public abstract void addCreateArgs(AbstractDockerLauncher launcher,
+                                       ArgumentListBuilder args);
 
     /**
      * Runs after the container is running, but before the build executes
      *
      * @param launcher
-     * @param build
-     *
      * @throws IOException
      * @throws InterruptedException
      */
-    public void postCreate(DockerLauncher launcher,
-                           AbstractBuild build) throws IOException, InterruptedException {
+    public void postCreate(AbstractDockerLauncher launcher) throws IOException, InterruptedException {
         //No-op, sub-classes should override
     }
 
     /**
      * Add the arguments to <code>docker exec</code> command that actually
      * executes the build
-     *
      * @param launcher
      * @param args
      */
-    public void addRunArgs(DockerLauncher launcher,
-                           ArgumentListBuilder args,
-                           AbstractBuild build) {
+    public void addRunArgs(AbstractDockerLauncher launcher,
+                           ArgumentListBuilder args) {
         //No-op, sub-classes should override
     }
 

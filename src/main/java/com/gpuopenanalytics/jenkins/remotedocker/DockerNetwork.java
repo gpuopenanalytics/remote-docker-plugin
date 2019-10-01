@@ -68,6 +68,16 @@ public class DockerNetwork {
     }
 
     /**
+     * Create a {@link DockerNetwork} if you already have an ID
+     *
+     * @param id
+     * @return
+     */
+    public static DockerNetwork fromExisting(String id) {
+        return new DockerNetwork(id);
+    }
+
+    /**
      * Adds this network to the argument list for <code>docker run</code>
      *
      * @param args
@@ -90,4 +100,7 @@ public class DockerNetwork {
         }
     }
 
+    public String getId() {
+        return id;
+    }
 }
