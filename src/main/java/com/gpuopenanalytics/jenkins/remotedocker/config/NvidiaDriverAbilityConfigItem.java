@@ -29,6 +29,7 @@ import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.List;
@@ -110,6 +111,7 @@ public class NvidiaDriverAbilityConfigItem extends ConfigItem {
         args.addKeyValuePair("", ENV_VAR_NAME, value, false);
     }
 
+    @Symbol("driver")
     @Extension
     public static class DescriptorImpl extends Descriptor<ConfigItem> {
 

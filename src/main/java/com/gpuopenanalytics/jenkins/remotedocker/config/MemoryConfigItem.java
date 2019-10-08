@@ -29,6 +29,7 @@ import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.regex.Pattern;
@@ -70,6 +71,7 @@ public class MemoryConfigItem extends ConfigItem {
         args.add("-m", Utils.resolveVariables(launcher, memory).toUpperCase());
     }
 
+    @Symbol("memory")
     @Extension
     public static class DescriptorImpl extends Descriptor<ConfigItem> {
 

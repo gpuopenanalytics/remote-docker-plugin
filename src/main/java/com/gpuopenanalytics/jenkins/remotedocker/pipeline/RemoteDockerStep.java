@@ -24,7 +24,10 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.pipeline;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.gpuopenanalytics.jenkins.remotedocker.job.AbstractDockerConfiguration;
+import com.gpuopenanalytics.jenkins.remotedocker.job.SideDockerConfiguration;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -38,15 +41,26 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public class RemoteDockerStep extends Step {
 
-    private final String image;
+    private boolean debug;
+    private AbstractDockerConfiguration main;
+    private List<SideDockerConfiguration> sideContainers;
 
     @DataBoundConstructor
-    public RemoteDockerStep(String image) {
-        this.image = image;
+    public RemoteDockerStep(boolean debug,
+                            AbstractDockerConfiguration main,
+                            List<SideDockerConfiguration> sideContainers) {
+        this.debug = debug;
+        this.main = main;
+        this.sideContainers = ImmutableList.copyOf(
+                Optional.ofNullable(sideContainers)
+                        .orElse(Collections.emptyList()));
     }
 
     @Override
@@ -54,8 +68,16 @@ public class RemoteDockerStep extends Step {
         return new RemoteDockerStepExecution(stepContext, this);
     }
 
-    public String getImage() {
-        return image;
+    public boolean isDebug() {
+        return debug;
+    }
+
+    public AbstractDockerConfiguration getMain() {
+        return main;
+    }
+
+    public List<SideDockerConfiguration> getSideContainers() {
+        return sideContainers;
     }
 
     @Extension

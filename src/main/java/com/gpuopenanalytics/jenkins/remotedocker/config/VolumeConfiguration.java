@@ -25,7 +25,6 @@
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
 import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
 import hudson.ExtensionPoint;
@@ -33,6 +32,7 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.Serializable;
@@ -95,6 +95,7 @@ public class VolumeConfiguration extends AbstractDescribableImpl<VolumeConfigura
         args.add("-v", getDockerArgument(launcher));
     }
 
+    @Symbol("volume")
     @Extension
     public static class DescriptorImpl extends Descriptor<VolumeConfiguration> {
 

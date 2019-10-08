@@ -29,6 +29,7 @@ import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.Properties;
@@ -65,6 +66,7 @@ public class EnvironmentVariableConfigItem extends ConfigItem {
         }
     }
 
+    @Symbol("enviroment")
     @Extension
     public static class DescriptorImpl extends Descriptor<ConfigItem> {
 

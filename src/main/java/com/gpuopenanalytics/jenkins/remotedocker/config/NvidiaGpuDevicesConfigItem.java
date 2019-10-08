@@ -29,6 +29,7 @@ import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -77,6 +78,7 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
         }
     }
 
+    @Symbol("gpus")
     @Extension
     public static class DescriptorImpl extends Descriptor<ConfigItem> {
 

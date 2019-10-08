@@ -24,17 +24,15 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.pipeline;
 
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.DockerState;
 import com.gpuopenanalytics.jenkins.remotedocker.RemoteDockerBuildWrapper;
 import com.gpuopenanalytics.jenkins.remotedocker.SimpleDockerLauncher;
-import com.gpuopenanalytics.jenkins.remotedocker.job.DockerImageConfiguration;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.LauncherDecorator;
-import hudson.model.TaskListener;
+import org.jenkinsci.plugins.workflow.steps.BodyExecution;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.BodyInvoker;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
@@ -43,7 +41,6 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.util.Collections;
 
 public class RemoteDockerStepExecution extends StepExecution {
 
@@ -52,9 +49,9 @@ public class RemoteDockerStepExecution extends StepExecution {
 
     @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED", justification = "Only used when starting.")
     private transient RemoteDockerStep remoteDockerStep;
-    private transient DockerLauncher dockerLauncher;
 
     private DockerState dockerState;
+    private BodyExecution bodyExecution;
 
     public RemoteDockerStepExecution(@Nonnull StepContext context,
                                      RemoteDockerStep remoteDockerStep) {
@@ -64,14 +61,11 @@ public class RemoteDockerStepExecution extends StepExecution {
 
     @Override
     public boolean start() throws Exception {
-        DockerImageConfiguration imageConfig = new DockerImageConfiguration(
-                Collections.emptyList(), Collections.emptyList(),
-                remoteDockerStep.getImage(), true);
         RemoteDockerBuildWrapper buildWrapper = new RemoteDockerBuildWrapper(
-                true, imageConfig, null);
+                remoteDockerStep.isDebug(), remoteDockerStep.getMain(),
+                remoteDockerStep.getSideContainers());
 
         Launcher launcher = getContext().get(Launcher.class);
-        TaskListener listener = getContext().get(TaskListener.class);
         FilePath workspace = getContext().get(FilePath.class);
 
         SimpleDockerLauncher simpleDockerLauncher = new SimpleDockerLauncher(
@@ -84,12 +78,12 @@ public class RemoteDockerStepExecution extends StepExecution {
         DockerLauncherDecorator dockerLauncherDecorator = new DockerLauncherDecorator(
                 buildWrapper.isDebug(),
                 dockerState.getMainContainerId(),
-                imageConfig);
+                remoteDockerStep.getMain());
 
         LauncherDecorator launcherDecorator = BodyInvoker.mergeLauncherDecorators(
                 getContext().get(LauncherDecorator.class),
                 dockerLauncherDecorator);
-        getContext().newBodyInvoker()
+        bodyExecution = getContext().newBodyInvoker()
                 .withContext(launcherDecorator)
                 .withCallback(new Callback(dockerState))
                 .start();
@@ -100,6 +94,9 @@ public class RemoteDockerStepExecution extends StepExecution {
 
     @Override
     public void stop(@Nonnull Throwable cause) throws Exception {
+        if (bodyExecution != null) {
+            bodyExecution.cancel(cause);
+        }
         if (dockerState != null) {
             Launcher launcher = getContext().get(Launcher.class);
             dockerState.tearDown(launcher);

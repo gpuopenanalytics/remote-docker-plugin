@@ -31,6 +31,7 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
@@ -89,6 +90,7 @@ public class SideDockerConfiguration extends AbstractDescribableImpl<SideDockerC
         dockerConfiguration.addRunArgs(launcher, args);
     }
 
+    @Symbol("side")
     @Extension
     public static class DescriptorImpl extends Descriptor<SideDockerConfiguration> {
 

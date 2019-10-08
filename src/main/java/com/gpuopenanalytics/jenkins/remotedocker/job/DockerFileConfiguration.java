@@ -32,6 +32,7 @@ import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
@@ -183,6 +184,7 @@ public class DockerFileConfiguration extends AbstractDockerConfiguration {
         args.add(image);
     }
 
+    @Symbol("file")
     @Extension
     public static class DescriptorImpl extends AbstractDockerConfigurationDescriptor {
 

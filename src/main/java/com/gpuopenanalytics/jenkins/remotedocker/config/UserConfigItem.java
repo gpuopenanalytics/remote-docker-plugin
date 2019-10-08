@@ -33,6 +33,7 @@ import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -157,6 +158,7 @@ public class UserConfigItem extends ConfigItem {
         }
     }
 
+    @Symbol("user")
     @Extension
     public static class DescriptorImpl extends Descriptor<ConfigItem> {
 

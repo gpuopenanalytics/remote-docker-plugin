@@ -30,6 +30,7 @@ import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.QuotedStringTokenizer;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.List;
@@ -67,6 +68,7 @@ public class ExtraDockerArgsConfigItem extends ConfigItem {
         args.add(newArgs);
     }
 
+    @Symbol("args")
     @Extension
     public static class DescriptorImpl extends Descriptor<ConfigItem> {
 

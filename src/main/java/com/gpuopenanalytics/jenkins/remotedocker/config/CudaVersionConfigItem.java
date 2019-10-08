@@ -31,6 +31,7 @@ import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.ListBoxModel;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.List;
@@ -81,6 +82,7 @@ public class CudaVersionConfigItem extends ConfigItem {
         args.addKeyValuePair("", ENV_VAR_NAME, "cuda>="+cuda, false);
     }
 
+    @Symbol("cudaVersion")
     @Extension
     public static class DescriptorImpl extends Descriptor<ConfigItem> {
 
