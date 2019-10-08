@@ -49,6 +49,13 @@
         <input name="existing_gid" type="hidden" value=""/>
         <input name="existing_custom" type="hidden" value="false"/>
     </f:radioBlock>
+    <f:radioBlock name="user" value="current" title="current user - the uid/gid of the user running jenkins on the node" inline="true"
+                  checked="${instance.isCurrentUser()}">
+        <input name="current_username" type="hidden" value="current"/>
+        <input name="current_uid" type="hidden" value=""/>
+        <input name="current_gid" type="hidden" value=""/>
+        <input name="current_custom" type="hidden" value="false"/>
+    </f:radioBlock>
     <f:radioBlock name="user" value="custom" title="custom - user will be added to the container" inline="true"
                   checked="${instance.isCustom()}">
         <f:entry title="Username (Required)" field="username">
