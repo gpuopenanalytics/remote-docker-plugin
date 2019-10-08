@@ -25,15 +25,15 @@
 package com.gpuopenanalytics.jenkins.remotedocker.pipeline;
 
 import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.DockerState;
 import com.gpuopenanalytics.jenkins.remotedocker.RemoteDockerBuildWrapper;
-import com.gpuopenanalytics.jenkins.remotedocker.job.AbstractDockerConfiguration;
+import com.gpuopenanalytics.jenkins.remotedocker.SimpleDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerImageConfiguration;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.LauncherDecorator;
-import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.BodyInvoker;
@@ -67,12 +67,23 @@ public class RemoteDockerStepExecution extends StepExecution {
         DockerImageConfiguration imageConfig = new DockerImageConfiguration(
                 Collections.emptyList(), Collections.emptyList(),
                 remoteDockerStep.getImage(), true);
-        createDockerLauncher(imageConfig);
-        dockerState = dockerLauncher.launchContainers();
+        RemoteDockerBuildWrapper buildWrapper = new RemoteDockerBuildWrapper(
+                true, imageConfig, null);
+
+        Launcher launcher = getContext().get(Launcher.class);
+        TaskListener listener = getContext().get(TaskListener.class);
+        FilePath workspace = getContext().get(FilePath.class);
+
+        SimpleDockerLauncher simpleDockerLauncher = new SimpleDockerLauncher(
+                launcher, buildWrapper.isDebug(), new EnvVars());
+
+        dockerState = DockerState.launchContainers(buildWrapper,
+                                                   simpleDockerLauncher,
+                                                   workspace);
 
         DockerLauncherDecorator dockerLauncherDecorator = new DockerLauncherDecorator(
-                dockerLauncher.isDebug(),
-                dockerLauncher.getMainContainerId(),
+                buildWrapper.isDebug(),
+                dockerState.getMainContainerId(),
                 imageConfig);
 
         LauncherDecorator launcherDecorator = BodyInvoker.mergeLauncherDecorators(
@@ -105,23 +116,6 @@ public class RemoteDockerStepExecution extends StepExecution {
     @Override
     public String getStatus() {
         return null;
-    }
-
-    private void createDockerLauncher(AbstractDockerConfiguration dockerConfiguration) throws IOException, InterruptedException {
-
-        RemoteDockerBuildWrapper buildWrapper = new RemoteDockerBuildWrapper(
-                true, dockerConfiguration, null);
-        Launcher launcher = getContext().get(Launcher.class);
-        TaskListener listener = getContext().get(TaskListener.class);
-        Run<?, ?> run = getContext().get(Run.class);
-        FilePath workspace = getContext().get(FilePath.class);
-        dockerLauncher = new DockerLauncher(true,
-                                            new EnvVars(),
-                                            workspace.toComputer(),
-                                            workspace,
-                                            launcher,
-                                            listener,
-                                            buildWrapper);
     }
 
     private static class Callback extends BodyExecutionCallback {

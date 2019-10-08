@@ -43,14 +43,14 @@ public class DockerNetwork {
     }
 
     /**
-     * Create a bridge network using the specified {@link DockerLauncher}
+     * Create a bridge network using the specified {@link AbstractDockerLauncher}
      *
      * @param launcher
      * @return
      * @throws IOException
      * @throws InterruptedException
      */
-    public static DockerNetwork create(DockerLauncher launcher) throws IOException, InterruptedException {
+    public static DockerNetwork create(AbstractDockerLauncher launcher) throws IOException, InterruptedException {
         ArgumentListBuilder args = new ArgumentListBuilder();
         args.add("docker", "network", "create", UUID.randomUUID().toString());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

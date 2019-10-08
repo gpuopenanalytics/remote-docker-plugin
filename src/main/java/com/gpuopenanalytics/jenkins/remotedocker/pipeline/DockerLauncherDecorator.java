@@ -34,7 +34,6 @@ import hudson.model.Node;
 import hudson.util.ArgumentListBuilder;
 
 import javax.annotation.Nonnull;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
@@ -112,22 +111,6 @@ public class DockerLauncherDecorator extends LauncherDecorator implements Serial
             @Override
             public boolean isDebug() {
                 return debug;
-            }
-
-            @Override
-            public void tearDown() throws IOException, InterruptedException {
-                ArgumentListBuilder args = new ArgumentListBuilder()
-                        .add("rm", "-f", mainContainerId);
-
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                int status = executeCommand(args)
-                        .stdout(out)
-                        .stderr(this.listener.getLogger())
-                        .join();
-
-                if (status != 0) {
-                    listener.error("Failed to remove container %s", mainContainerId);
-                }
             }
 
             /**

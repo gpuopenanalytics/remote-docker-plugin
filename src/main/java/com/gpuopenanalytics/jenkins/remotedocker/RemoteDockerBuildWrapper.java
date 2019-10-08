@@ -86,16 +86,11 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
     public Launcher decorateLauncher(AbstractBuild build,
                                      Launcher launcher,
                                      BuildListener listener) throws Run.RunnerAbortedException {
-        try {
-            return new DockerLauncher(debug, build.getEnvironment(listener),
-                                      build.getWorkspace().toComputer(),
-                                      build.getWorkspace(),
-                                      launcher,
-                                      listener,
-                                      this);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        return new DockerLauncher(debug,
+                                  build,
+                                  launcher,
+                                  listener,
+                                  this);
     }
 
     @Override
@@ -103,14 +98,10 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
                              Launcher launcher,
                              BuildListener listener) throws IOException, InterruptedException {
         build.addAction(new DockerAction());
-        try {
-            ((DockerLauncher) launcher).launchContainers();
-            return new DockerEnvironment((DockerLauncher) launcher);
-        } catch (IOException | InterruptedException e) {
-            //Attempt tearDown in case we partially started some containers
-            ((DockerLauncher) launcher).tearDown();
-            throw e;
-        }
+        DockerState state = DockerState.launchContainers(this,
+                                                         (AbstractDockerLauncher) launcher,
+                                                         build.getWorkspace());
+        return new DockerEnvironment((DockerLauncher) launcher, state);
 
     }
 
@@ -120,15 +111,18 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
     private class DockerEnvironment extends BuildWrapper.Environment {
 
         private DockerLauncher launcher;
+        private DockerState dockerState;
 
-        public DockerEnvironment(DockerLauncher launcher) {
+        public DockerEnvironment(DockerLauncher launcher,
+                                 DockerState dockerState) {
             this.launcher = launcher;
+            this.dockerState = dockerState;
         }
 
         @Override
         public boolean tearDown(AbstractBuild build,
                                 BuildListener listener) throws IOException, InterruptedException {
-            this.launcher.tearDown();
+            dockerState.tearDown(launcher.getInner());
             return true;
         }
     }

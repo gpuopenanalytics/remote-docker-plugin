@@ -34,6 +34,8 @@ import java.io.IOException;
 
 public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher {
 
+    private DockerState dockerState;
+
     protected AbstractDockerLauncher(@Nonnull Launcher launcher) {
         super(launcher);
     }
@@ -102,6 +104,11 @@ public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher 
 
     public abstract boolean isDebug();
 
-    public abstract void tearDown() throws IOException, InterruptedException;
+    void configure(DockerState dockerState) {
+        this.dockerState = dockerState;
+    }
 
+    protected DockerState getDockerState() {
+        return dockerState;
+    }
 }
