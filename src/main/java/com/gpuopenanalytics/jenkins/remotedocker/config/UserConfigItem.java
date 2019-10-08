@@ -65,7 +65,7 @@ public class UserConfigItem extends ConfigItem {
     }
 
     public boolean isCurrentUser() {
-        return "current".equals(username);
+        return !isCustom() && "current".equals(username);
     }
 
     public boolean isCustom() {
