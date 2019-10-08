@@ -33,7 +33,6 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
-import hudson.model.TaskListener;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -87,7 +86,6 @@ public class RemoteDockerStep extends Step {
         public Set<? extends Class<?>> getRequiredContext() {
             return ImmutableSet.of(Run.class,
                                    FilePath.class,
-                                   TaskListener.class,
                                    Launcher.class,
                                    EnvVars.class);
         }

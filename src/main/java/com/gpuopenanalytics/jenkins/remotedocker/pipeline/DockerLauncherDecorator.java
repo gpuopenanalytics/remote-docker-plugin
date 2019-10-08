@@ -43,13 +43,16 @@ public class DockerLauncherDecorator extends LauncherDecorator implements Serial
     private boolean debug;
     private String mainContainerId;
     private DockerConfiguration dockerConfiguration;
+    private EnvVars environment;
 
     public DockerLauncherDecorator(boolean debug,
                                    String mainContainerId,
-                                   DockerConfiguration dockerConfiguration) {
+                                   DockerConfiguration dockerConfiguration,
+                                   EnvVars environment) {
         this.debug = debug;
         this.mainContainerId = mainContainerId;
         this.dockerConfiguration = dockerConfiguration;
+        this.environment = environment;
     }
 
     @Nonnull
@@ -105,7 +108,7 @@ public class DockerLauncherDecorator extends LauncherDecorator implements Serial
 
             @Override
             public EnvVars getEnvironment() {
-                return new EnvVars();
+                return environment;
             }
 
             @Override

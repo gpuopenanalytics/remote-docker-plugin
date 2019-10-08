@@ -67,9 +67,10 @@ public class RemoteDockerStepExecution extends StepExecution {
 
         Launcher launcher = getContext().get(Launcher.class);
         FilePath workspace = getContext().get(FilePath.class);
+        EnvVars environment = getContext().get(EnvVars.class);
 
         SimpleDockerLauncher simpleDockerLauncher = new SimpleDockerLauncher(
-                launcher, buildWrapper.isDebug(), new EnvVars());
+                launcher, buildWrapper.isDebug(), environment);
 
         dockerState = DockerState.launchContainers(buildWrapper,
                                                    simpleDockerLauncher,
@@ -78,7 +79,8 @@ public class RemoteDockerStepExecution extends StepExecution {
         DockerLauncherDecorator dockerLauncherDecorator = new DockerLauncherDecorator(
                 buildWrapper.isDebug(),
                 dockerState.getMainContainerId(),
-                remoteDockerStep.getMain());
+                remoteDockerStep.getMain(),
+                environment);
 
         LauncherDecorator launcherDecorator = BodyInvoker.mergeLauncherDecorators(
                 getContext().get(LauncherDecorator.class),
