@@ -45,6 +45,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * {@link Step} that executes its body inside of a docker container
+ */
 public class RemoteDockerStep extends Step {
 
     private boolean debug;

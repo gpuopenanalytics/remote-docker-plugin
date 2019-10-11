@@ -89,7 +89,6 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
         return new DockerLauncher(debug,
                                   build,
                                   launcher,
-                                  listener,
                                   this);
     }
 

@@ -25,32 +25,34 @@
 package com.gpuopenanalytics.jenkins.remotedocker.pipeline;
 
 import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.DockerState;
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfiguration;
 import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.LauncherDecorator;
 import hudson.Proc;
 import hudson.model.Node;
-import hudson.util.ArgumentListBuilder;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.List;
 
+/**
+ * Decorates a {@link Launcher} into an {@link AbstractDockerLauncher}
+ */
 public class DockerLauncherDecorator extends LauncherDecorator implements Serializable {
 
     private boolean debug;
-    private String mainContainerId;
+    private DockerState dockerState;
     private DockerConfiguration dockerConfiguration;
     private EnvVars environment;
 
     public DockerLauncherDecorator(boolean debug,
-                                   String mainContainerId,
+                                   DockerState dockerState,
                                    DockerConfiguration dockerConfiguration,
                                    EnvVars environment) {
         this.debug = debug;
-        this.mainContainerId = mainContainerId;
+        this.dockerState = dockerState;
         this.dockerConfiguration = dockerConfiguration;
         this.environment = environment;
     }
@@ -58,52 +60,13 @@ public class DockerLauncherDecorator extends LauncherDecorator implements Serial
     @Nonnull
     @Override
     public Launcher decorate(@Nonnull Launcher launcher, @Nonnull Node node) {
+        return new AbstractDockerLauncher(launcher, dockerState) {
 
-        return new AbstractDockerLauncher(launcher) {
-
-            /**
-             * Invoke <code>docker exec</code> on the already created container.
-             *
-             * @param starter
-             * @param addRunArgs
-             * @return
-             * @throws IOException
-             */
+            @Override
             public Proc dockerExec(Launcher.ProcStarter starter,
                                    boolean addRunArgs) throws IOException {
-                ArgumentListBuilder args = new ArgumentListBuilder()
-                        .add("exec");
-                if (starter.pwd() != null) {
-                    args.add("--workdir", starter.pwd().getRemote());
-                }
-                if (addRunArgs) {
-                    dockerConfiguration.addRunArgs(this, args);
-                }
-
-                args.add(mainContainerId);
-
-                args.add("env").add(starter.envs());
-
-                List<String> originalCmds = starter.cmds();
-                boolean[] originalMask = starter.masks();
-                for (int i = 0; i < originalCmds.size(); i++) {
-                    boolean masked = originalMask == null ? false : i < originalMask.length ? originalMask[i] : false;
-                    args.add(originalCmds.get(i), masked);
-                }
-                Launcher.ProcStarter procStarter = executeCommand(args);
-
-                if (starter.stdout() != null) {
-                    procStarter.stdout(starter.stdout());
-                } else {
-                    procStarter.stdout(listener.getLogger());
-                }
-                if (starter.stderr() != null) {
-                    procStarter.stderr(starter.stderr());
-                } else {
-                    procStarter.stderr(listener.getLogger());
-                }
-
-                return procStarter.start();
+                return super.dockerExec(starter, addRunArgs,
+                                        dockerConfiguration);
             }
 
             @Override
@@ -114,26 +77,6 @@ public class DockerLauncherDecorator extends LauncherDecorator implements Serial
             @Override
             public boolean isDebug() {
                 return debug;
-            }
-
-            /**
-             * Execute a docker command
-             *
-             * @param args
-             * @return
-             */
-            public Launcher.ProcStarter executeCommand(ArgumentListBuilder args) {
-                if (args.toList().isEmpty()) {
-                    throw new IllegalArgumentException("No args given");
-                }
-                if (!"docker".equals(args.toList().get(0))) {
-                    args.prepend("docker");
-                }
-                return getInner().launch()
-                        //TODO I think we should pass something here
-                        //.envs()
-                        .cmds(args)
-                        .quiet(!debug);
             }
         };
     }

@@ -42,6 +42,9 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 
+/**
+ * The execution of a {@link RemoteDockerStep}
+ */
 public class RemoteDockerStepExecution extends StepExecution {
 
     private static final long serialVersionUID = 1L;
@@ -78,7 +81,7 @@ public class RemoteDockerStepExecution extends StepExecution {
 
         DockerLauncherDecorator dockerLauncherDecorator = new DockerLauncherDecorator(
                 buildWrapper.isDebug(),
-                dockerState.getMainContainerId(),
+                dockerState,
                 remoteDockerStep.getMain(),
                 environment);
 
@@ -117,6 +120,10 @@ public class RemoteDockerStepExecution extends StepExecution {
         return null;
     }
 
+    /**
+     * Callback to execute at the end of the step's body. Basically, just
+     * shutdown the containers
+     */
     private static class Callback extends BodyExecutionCallback {
 
         private DockerState dockerState;
@@ -132,7 +139,7 @@ public class RemoteDockerStepExecution extends StepExecution {
                 dockerState.tearDown(launcher);
                 context.onSuccess(result);
             } catch (IOException | InterruptedException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         }
 
@@ -143,7 +150,7 @@ public class RemoteDockerStepExecution extends StepExecution {
                 dockerState.tearDown(launcher);
                 context.onFailure(t);
             } catch (IOException | InterruptedException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         }
     }

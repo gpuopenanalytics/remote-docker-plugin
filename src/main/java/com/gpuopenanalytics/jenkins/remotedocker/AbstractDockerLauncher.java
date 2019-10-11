@@ -24,6 +24,7 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker;
 
+import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfiguration;
 import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.Proc;
@@ -31,13 +32,24 @@ import hudson.util.ArgumentListBuilder;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.List;
 
+/**
+ * Root class for {@link Launcher}s that delegate commands into a docker
+ * container
+ */
 public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher {
 
     private DockerState dockerState;
 
     protected AbstractDockerLauncher(@Nonnull Launcher launcher) {
         super(launcher);
+    }
+
+    protected AbstractDockerLauncher(@Nonnull Launcher launcher,
+                                     @Nonnull DockerState dockerState) {
+        this(launcher);
+        configure(dockerState);
     }
 
     @Override
@@ -73,6 +85,55 @@ public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher 
                                     boolean addRunArgs) throws IOException;
 
     /**
+     * Invoke <code>docker exec</code> on the already created container.
+     *
+     * @param starter
+     * @param addRunArgs
+     * @param dockerConfiguration
+     * @return
+     */
+    protected Proc dockerExec(Launcher.ProcStarter starter,
+                              boolean addRunArgs,
+                              DockerConfiguration dockerConfiguration) throws IOException {
+        if (dockerState == null || dockerState.getMainContainerId() == null) {
+            throw new IllegalStateException("Container is not started.");
+        }
+        ArgumentListBuilder args = new ArgumentListBuilder()
+                .add("exec");
+        if (starter.pwd() != null) {
+            args.add("--workdir", starter.pwd().getRemote());
+        }
+        if (addRunArgs) {
+            dockerConfiguration.addRunArgs(this, args);
+        }
+
+        args.add(dockerState.getMainContainerId());
+
+        args.add("env").add(starter.envs());
+
+        List<String> originalCmds = starter.cmds();
+        boolean[] originalMask = starter.masks();
+        for (int i = 0; i < originalCmds.size(); i++) {
+            boolean masked = originalMask == null ? false : i < originalMask.length ? originalMask[i] : false;
+            args.add(originalCmds.get(i), masked);
+        }
+        Launcher.ProcStarter procStarter = executeCommand(args);
+
+        if (starter.stdout() != null) {
+            procStarter.stdout(starter.stdout());
+        } else {
+            procStarter.stdout(listener.getLogger());
+        }
+        if (starter.stderr() != null) {
+            procStarter.stderr(starter.stderr());
+        } else {
+            procStarter.stderr(listener.getLogger());
+        }
+
+        return procStarter.start();
+    }
+
+    /**
      * Execute a <code>docker</code> command such as build or pull.
      * <p>For exec, use {@link #dockerExec(ArgumentListBuilder, boolean)} or
      * {@link #dockerExec(ProcStarter, boolean)}
@@ -100,14 +161,34 @@ public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher 
                 .quiet(!isDebug());
     }
 
+    /**
+     * Get the environment associated with this Launcher
+     *
+     * @return
+     */
     public abstract EnvVars getEnvironment();
 
+    /**
+     * Whether the launcher should print debug information
+     *
+     * @return
+     */
     public abstract boolean isDebug();
 
+    /**
+     * Make this Launcher aware of a set up {@link DockerState}
+     *
+     * @param dockerState
+     */
     void configure(DockerState dockerState) {
         this.dockerState = dockerState;
     }
 
+    /**
+     * Get the, possibly null, {@link DockerState} of this Launcher
+     *
+     * @return
+     */
     protected DockerState getDockerState() {
         return dockerState;
     }

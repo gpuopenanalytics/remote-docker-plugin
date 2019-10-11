@@ -31,6 +31,9 @@ import hudson.Proc;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 
+/**
+ * Simple {@link AbstractDockerLauncher} which cannot execute commands inside of a container
+ */
 public class SimpleDockerLauncher extends AbstractDockerLauncher {
 
     private boolean debug;

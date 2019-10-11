@@ -42,6 +42,10 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
+/**
+ * An {@link AbstractDockerConfiguration} created from a Dockerfile. The
+ * Dockerfile is built and the resulting image used for the build.
+ */
 public class DockerFileConfiguration extends AbstractDockerConfiguration {
 
     private String dockerFile;

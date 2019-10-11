@@ -48,6 +48,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Tracks what containers
+ */
 public class DockerState implements Serializable {
 
     private boolean debug;
@@ -229,12 +232,16 @@ public class DockerState implements Serializable {
         return debug;
     }
 
+    /**
+     * Gets all of the container IDs both main and side containers
+     * @return
+     */
     public ImmutableList<String> getContainerIds() {
         return containerIds;
     }
 
-    public String getNetworkId() {
-        return networkId;
+    public Optional<String> getNetworkId() {
+        return Optional.ofNullable(networkId);
     }
 
 }

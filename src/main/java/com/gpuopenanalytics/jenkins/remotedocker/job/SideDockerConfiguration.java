@@ -36,6 +36,11 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 
+/**
+ * Represents a side container. Side containers are started before the main one
+ * and are typically used during testing to emulate production resources such as
+ * a database or web server
+ */
 public class SideDockerConfiguration extends AbstractDescribableImpl<SideDockerConfiguration> implements DockerConfiguration {
 
     private String name;
