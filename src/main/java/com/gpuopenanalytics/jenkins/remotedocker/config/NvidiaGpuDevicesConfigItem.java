@@ -78,6 +78,14 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
         }
     }
 
+    public String getNvidiaDevices(){
+        return getRawValue();
+    }
+
+    public String getNvidiaDevicesCustom(){
+        return getRawCustomValue().orElse(null);
+    }
+
     @Symbol("gpus")
     @Extension
     public static class DescriptorImpl extends Descriptor<ConfigItem> {

@@ -48,7 +48,8 @@ public class CudaVersionConfigItem extends ConfigItem {
                                                                        "9.0",
                                                                        "9.1",
                                                                        "9.2",
-                                                                       "10.0");
+                                                                       "10.0",
+                                                                       "10.1");
     private static ListBoxModel CUDA_OPTIONS = new ListBoxModel(
             CUDA_VERSIONS.stream()
                     .map(ListBoxModel.Option::new)

@@ -63,6 +63,14 @@ public class DockerRuntimeConfigItem extends CustomConfigItem {
         args.addKeyValuePair("", "--runtime", getResolvedValue(launcher), false);
     }
 
+    public String getDockerRuntime(){
+        return getRawValue();
+    }
+
+    public String getDockerRuntimeCustom(){
+        return getRawCustomValue().orElse(null);
+    }
+
     @Symbol("runtime")
     @Extension
     public static class DescriptorImpl extends Descriptor<ConfigItem> {
