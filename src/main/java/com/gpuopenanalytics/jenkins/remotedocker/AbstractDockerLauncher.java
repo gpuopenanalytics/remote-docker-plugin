@@ -141,12 +141,6 @@ public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher 
      * @param args
      * @return
      */
-    /**
-     * Execute a docker command
-     *
-     * @param args
-     * @return
-     */
     public Launcher.ProcStarter executeCommand(ArgumentListBuilder args) {
         if (args.toList().isEmpty()) {
             throw new IllegalArgumentException("No args given");
