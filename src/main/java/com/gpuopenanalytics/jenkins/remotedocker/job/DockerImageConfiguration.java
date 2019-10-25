@@ -88,10 +88,8 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
             String image = Utils.resolveVariables(launcher, getImage());
             args.add("docker", "pull", image);
             Launcher.ProcStarter proc = launcher.executeCommand(args)
-                    .stderr(launcher.getListener().getLogger());
-            if (launcher.isDebug()) {
-                proc = proc.stdout(launcher.getListener());
-            }
+                    .stderr(launcher.getListener().getLogger())
+                    .stdout(launcher.getListener());
             int status = proc.join();
             if (status != 0) {
                 throw new IOException("Could not pull image: " + image);
