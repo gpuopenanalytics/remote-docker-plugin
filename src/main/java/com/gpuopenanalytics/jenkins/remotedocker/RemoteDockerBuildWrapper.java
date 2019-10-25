@@ -39,6 +39,7 @@ import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -56,16 +57,23 @@ import java.util.Optional;
  */
 public class RemoteDockerBuildWrapper extends BuildWrapper {
 
+    private static final String WORKSPACE_OVERRIDE_FIELD = "workspaceOverride";
+    private static final String WORKSPACE_OVERRIDE_OPTIONAL_FIELD = "workspaceOverrideOptional";
+
     private boolean debug;
+    private String workspaceOverride;
     private Boolean removeContainers = true;
     private AbstractDockerConfiguration dockerConfiguration;
     private List<SideDockerConfiguration> sideDockerConfigurations;
 
     @DataBoundConstructor
     public RemoteDockerBuildWrapper(boolean debug,
+                                    String workspaceOverride,
                                     AbstractDockerConfiguration dockerConfiguration,
                                     List<SideDockerConfiguration> sideDockerConfigurations) {
         this.debug = debug;
+        this.workspaceOverride = StringUtils.isNotEmpty(
+                workspaceOverride) ? workspaceOverride : null;
         this.dockerConfiguration = dockerConfiguration;
         this.sideDockerConfigurations = Optional.ofNullable(
                 sideDockerConfigurations)
@@ -74,6 +82,10 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
 
     public boolean isDebug() {
         return debug;
+    }
+
+    public String getWorkspaceOverride() {
+        return workspaceOverride;
     }
 
     @DataBoundSetter
@@ -93,6 +105,15 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
         return sideDockerConfigurations;
     }
 
+    private void validate() throws Descriptor.FormException {
+        if (StringUtils.isNotEmpty(workspaceOverride)
+                && !workspaceOverride.startsWith("/")) {
+            throw new Descriptor.FormException(
+                    "Workspace override must be an absolute path",
+                    WORKSPACE_OVERRIDE_FIELD);
+        }
+    }
+
     @Override
     public Launcher decorateLauncher(AbstractBuild build,
                                      Launcher launcher,
@@ -107,7 +128,8 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
         build.addAction(new DockerAction());
         try {
             ((DockerLauncher) launcher).launchContainers();
-            return new DockerEnvironment((DockerLauncher) launcher, removeContainers);
+            return new DockerEnvironment((DockerLauncher) launcher,
+                                         removeContainers);
         } catch (IOException | InterruptedException e) {
             //Attempt tearDown in case we partially started some containers
             ((DockerLauncher) launcher).tearDown(true);
@@ -123,9 +145,10 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
         private DockerLauncher launcher;
         private boolean removeContainers;
 
-        public DockerEnvironment(DockerLauncher launcher, boolean removeContainers) {
+        public DockerEnvironment(DockerLauncher launcher,
+                                 boolean removeContainers) {
             this.launcher = launcher;
-            this.removeContainers=removeContainers;
+            this.removeContainers = removeContainers;
         }
 
         @Override
@@ -155,8 +178,13 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
             if (formData.isNullObject()) {
                 return null;
             }
+            if (!formData.getBoolean(WORKSPACE_OVERRIDE_OPTIONAL_FIELD)) {
+                //If the box is unchecked, override whatever value might have been entered
+                formData.remove(WORKSPACE_OVERRIDE_FIELD);
+            }
             RemoteDockerBuildWrapper wrapper = (RemoteDockerBuildWrapper) super.newInstance(
                     req, formData);
+            wrapper.validate();
             wrapper.dockerConfiguration.validate();
             for (SideDockerConfiguration side : wrapper.sideDockerConfigurations) {
                 side.validate();

@@ -43,5 +43,10 @@
     <f:entry title="Debug" field="debug">
         <f:checkbox/>
     </f:entry>
+    <f:optionalBlock name="workspaceOverrideOptional" title="Override workspace mount" inline="true" checked="${!empty(instance.workspaceOverride)}">
+        <f:entry title="Workspace path" field="workspaceOverride">
+            <f:textbox/>
+        </f:entry>
+    </f:optionalBlock>
 
 </j:jelly>

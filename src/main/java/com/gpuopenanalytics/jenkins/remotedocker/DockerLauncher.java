@@ -136,6 +136,9 @@ public class DockerLauncher extends Launcher {
     private ArgumentListBuilder getlaunchArgs(DockerConfiguration config,
                                               boolean isMain) throws IOException, InterruptedException {
         String workspacePath = build.getWorkspace().getRemote();
+        String workspaceTarget = Optional.ofNullable(
+                buildWrapper.getWorkspaceOverride())
+                .orElse(workspacePath);
         //Fully resolve the source workspace
         String workspaceSrc = Paths.get(workspacePath)
                 .toAbsolutePath()
@@ -160,7 +163,6 @@ public class DockerLauncher extends Launcher {
         ArgumentListBuilder args = new ArgumentListBuilder()
                 .add("run", "-t", "-d")
                 .add("--name", Utils.resolveVariables(this, "$BUILD_TAG"))
-                .add("--workdir", workspacePath)
                 //Add bridge network for internet access
                 .add("--network", "bridge");
         //Add inter-container network if needed
@@ -169,8 +171,9 @@ public class DockerLauncher extends Launcher {
         if (isMain) {
             //Start a shell to block the container, overriding the entrypoint in case the image already defines that
             args.add("--entrypoint", "/bin/sh")
-                    .add("-v", workspaceSrc + ":" + workspacePath)
-                    ////Jenkins puts scripts here
+                    .add("--workdir", workspaceTarget)
+                    .add("-v", workspaceSrc + ":" + workspaceTarget)
+                    //Jenkins puts scripts here
                     .add("-v", tmpSrc + ":" + tmpDest);
         }
         config.addCreateArgs(this, args, build);
@@ -252,7 +255,10 @@ public class DockerLauncher extends Launcher {
         ArgumentListBuilder args = new ArgumentListBuilder()
                 .add("exec");
         if (starter.pwd() != null) {
-            args.add("--workdir", starter.pwd().getRemote());
+            String path = Optional.ofNullable(
+                    buildWrapper.getWorkspaceOverride())
+                    .orElse(starter.pwd().getRemote());
+            args.add("--workdir", path);
         }
         if (addRunArgs) {
             buildWrapper.getDockerConfiguration().addRunArgs(this, args, build);
@@ -261,6 +267,10 @@ public class DockerLauncher extends Launcher {
         args.add(mainContainerId);
 
         args.add("env").add(starter.envs());
+        if (buildWrapper.getWorkspaceOverride() != null) {
+            //Override $WORKSPACE inside the container
+            args.add("WORKSPACE=" + buildWrapper.getWorkspaceOverride());
+        }
 
         List<String> originalCmds = starter.cmds();
         boolean[] originalMask = starter.masks();
