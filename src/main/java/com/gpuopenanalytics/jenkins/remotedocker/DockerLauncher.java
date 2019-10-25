@@ -290,11 +290,14 @@ public class DockerLauncher extends Launcher {
      * @throws IOException
      * @throws InterruptedException
      */
-    public void tearDown() throws IOException, InterruptedException {
-        boolean exception = false;
+    public void tearDown(boolean removeContainers) throws IOException, InterruptedException {
         for (String containerId : containerIds) {
-            ArgumentListBuilder args = new ArgumentListBuilder()
-                    .add("rm", "-f", containerId);
+            ArgumentListBuilder args = new ArgumentListBuilder();
+            if (removeContainers) {
+                args.add("rm", "-f", containerId);
+            } else {
+                args.add("stop", containerId);
+            }
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             int status = executeCommand(args)
@@ -303,7 +306,9 @@ public class DockerLauncher extends Launcher {
                     .join();
 
             if (status != 0) {
-                listener.error("Failed to remove container %s", containerId);
+                listener.error("Failed to %s container %s",
+                               removeContainers ? "remove" : "stop",
+                               containerId);
             }
         }
         if (network.isPresent()) {

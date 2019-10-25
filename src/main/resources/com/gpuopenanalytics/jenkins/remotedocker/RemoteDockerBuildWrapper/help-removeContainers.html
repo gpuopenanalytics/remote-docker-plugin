@@ -1,4 +1,3 @@
-<?jelly escape-by-default='true'?>
 <!--
   ~ The MIT License
   ~
@@ -22,26 +21,6 @@
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   ~ THE SOFTWARE.
   -->
-
-<j:jelly xmlns:j="jelly:core"
-         xmlns:f="/lib/form">
-
-    <f:dropdownDescriptorSelector title="Build container"
-                                  field="dockerConfiguration"
-                                  descriptors="${descriptor.dockerConfigurationItemDescriptors}"
-                                  default="${descriptor.defaultDockerConfigurationDescriptor}"
-    />
-    <f:entry title="Side containers">
-        <f:repeatableProperty field="sideDockerConfigurations" minimum="0" header="Side Container" var="item"
-                              add="Add Side Container">
-            <f:repeatableDeleteButton/>
-        </f:repeatableProperty>
-    </f:entry>
-    <f:entry title="Remove containers" field="removeContainers">
-        <f:checkbox default="true"/>
-    </f:entry>
-    <f:entry title="Debug" field="debug">
-        <f:checkbox/>
-    </f:entry>
-
-</j:jelly>
+<div>
+    Whether the containers should be removed (<code>docker rm</code>) when the job completes.
+</div>

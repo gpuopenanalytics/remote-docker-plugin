@@ -40,6 +40,7 @@ import hudson.tasks.BuildWrapperDescriptor;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.IOException;
@@ -56,6 +57,7 @@ import java.util.Optional;
 public class RemoteDockerBuildWrapper extends BuildWrapper {
 
     private boolean debug;
+    private Boolean removeContainers = true;
     private AbstractDockerConfiguration dockerConfiguration;
     private List<SideDockerConfiguration> sideDockerConfigurations;
 
@@ -72,6 +74,15 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
 
     public boolean isDebug() {
         return debug;
+    }
+
+    @DataBoundSetter
+    public void setRemoveContainers(Boolean removeContainers) {
+        this.removeContainers = removeContainers;
+    }
+
+    public Boolean isRemoveContainers() {
+        return removeContainers != null ? removeContainers : true;
     }
 
     public AbstractDockerConfiguration getDockerConfiguration() {
@@ -96,13 +107,12 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
         build.addAction(new DockerAction());
         try {
             ((DockerLauncher) launcher).launchContainers();
-            return new DockerEnvironment((DockerLauncher) launcher);
+            return new DockerEnvironment((DockerLauncher) launcher, removeContainers);
         } catch (IOException | InterruptedException e) {
             //Attempt tearDown in case we partially started some containers
-            ((DockerLauncher) launcher).tearDown();
+            ((DockerLauncher) launcher).tearDown(true);
             throw e;
         }
-
     }
 
     /**
@@ -111,15 +121,17 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
     private class DockerEnvironment extends BuildWrapper.Environment {
 
         private DockerLauncher launcher;
+        private boolean removeContainers;
 
-        public DockerEnvironment(DockerLauncher launcher) {
+        public DockerEnvironment(DockerLauncher launcher, boolean removeContainers) {
             this.launcher = launcher;
+            this.removeContainers=removeContainers;
         }
 
         @Override
         public boolean tearDown(AbstractBuild build,
                                 BuildListener listener) throws IOException, InterruptedException {
-            this.launcher.tearDown();
+            this.launcher.tearDown(removeContainers);
             return true;
         }
     }
