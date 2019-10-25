@@ -37,6 +37,9 @@
             <f:repeatableDeleteButton/>
         </f:repeatableProperty>
     </f:entry>
+    <f:entry title="Remove containers" field="removeContainers">
+        <f:checkbox default="true"/>
+    </f:entry>
     <f:entry title="Debug" field="debug">
         <f:checkbox/>
     </f:entry>
