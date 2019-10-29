@@ -86,5 +86,18 @@
         </profile>
     </profiles>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>animal-sniffer-maven-plugin</artifactId>
+                <configuration>
+                    <ignores combine.children="append">
+                        <ignore>com.sun.security.auth.module.UnixSystem</ignore>
+                    </ignores>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
