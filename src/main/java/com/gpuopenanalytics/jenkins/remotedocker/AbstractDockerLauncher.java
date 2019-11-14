@@ -33,6 +33,7 @@ import hudson.util.ArgumentListBuilder;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Root class for {@link Launcher}s that delegate commands into a docker
@@ -94,6 +95,7 @@ public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher 
      */
     protected Proc dockerExec(Launcher.ProcStarter starter,
                               boolean addRunArgs,
+                              String workspaceOverride,
                               DockerConfiguration dockerConfiguration) throws IOException {
         if (dockerState == null || dockerState.getMainContainerId() == null) {
             throw new IllegalStateException("Container is not started.");
@@ -101,7 +103,9 @@ public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher 
         ArgumentListBuilder args = new ArgumentListBuilder()
                 .add("exec");
         if (starter.pwd() != null) {
-            args.add("--workdir", starter.pwd().getRemote());
+            String path = Optional.ofNullable(workspaceOverride)
+                    .orElse(starter.pwd().getRemote());
+            args.add("--workdir", path);
         }
         if (addRunArgs) {
             dockerConfiguration.addRunArgs(this, args);
@@ -110,6 +114,10 @@ public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher 
         args.add(dockerState.getMainContainerId());
 
         args.add("env").add(starter.envs());
+        if (workspaceOverride != null) {
+            //Override $WORKSPACE inside the container
+            args.add("WORKSPACE=" + workspaceOverride);
+        }
 
         List<String> originalCmds = starter.cmds();
         boolean[] originalMask = starter.masks();

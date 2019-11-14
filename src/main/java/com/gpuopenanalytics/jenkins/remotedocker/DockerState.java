@@ -57,15 +57,18 @@ public class DockerState implements Serializable {
     private String mainContainerId;
     private ImmutableList<String> containerIds;
     private String networkId;
+    private boolean removeContainers;
 
     public DockerState(boolean debug,
                        String mainContainerId,
                        Collection<String> containerIds,
-                       Optional<DockerNetwork> network) {
+                       Optional<DockerNetwork> network,
+                       boolean removeContainers) {
         this.debug = debug;
         this.mainContainerId = mainContainerId;
         this.containerIds = ImmutableList.copyOf(containerIds);
         this.networkId = network.map(DockerNetwork::getId).orElse(null);
+        this.removeContainers = removeContainers;
     }
 
     private int execute(Launcher launcher,
@@ -82,21 +85,24 @@ public class DockerState implements Serializable {
     }
 
     public void tearDown(Launcher launcher) throws IOException, InterruptedException {
-        TaskListener listener = launcher.getListener();
-        for (String containerId : containerIds) {
-            ArgumentListBuilder args = new ArgumentListBuilder()
-                    .add("docker", "rm", "-f", containerId);
-            int status = execute(launcher, args);
-            if (status != 0) {
-                listener.error("Failed to remove container %s", containerId);
+        if (removeContainers) {
+            TaskListener listener = launcher.getListener();
+            for (String containerId : containerIds) {
+                ArgumentListBuilder args = new ArgumentListBuilder()
+                        .add("docker", "rm", "-f", containerId);
+                int status = execute(launcher, args);
+                if (status != 0) {
+                    listener.error("Failed to remove container %s",
+                                   containerId);
+                }
             }
-        }
-        if (networkId != null) {
-            ArgumentListBuilder args = new ArgumentListBuilder()
-                    .add("docker", "network", "rm", networkId);
-            int status = execute(launcher, args);
-            if (status != 0) {
-                listener.error("Failed to remove network %s", networkId);
+            if (networkId != null) {
+                ArgumentListBuilder args = new ArgumentListBuilder()
+                        .add("docker", "network", "rm", networkId);
+                int status = execute(launcher, args);
+                if (status != 0) {
+                    listener.error("Failed to remove network %s", networkId);
+                }
             }
         }
     }
@@ -118,21 +124,22 @@ public class DockerState implements Serializable {
         List<String> containerIds = new ArrayList<>();
         //Launch side containers first
         for (SideDockerConfiguration side : buildWrapper.getSideDockerConfigurations()) {
-            String id = launchContainer(side, false, launcher, workspace,
+            String id = launchContainer(buildWrapper, side, false, launcher, workspace,
                                         network);
             containerIds.add(id);
         }
 
         //Launch main container
         DockerConfiguration main = buildWrapper.getDockerConfiguration();
-        String mainId = launchContainer(main, true, launcher, workspace,
+        String mainId = launchContainer(buildWrapper, main, true, launcher, workspace,
                                         network);
         containerIds.add(mainId);
         Collections.reverse(containerIds);
 
         DockerState dockerState = new DockerState(buildWrapper.isDebug(),
                                                   mainId, containerIds,
-                                                  network);
+                                                  network,
+                                                  buildWrapper.isRemoveContainers());
         launcher.configure(dockerState);
         return dockerState;
     }
@@ -144,12 +151,16 @@ public class DockerState implements Serializable {
      * @throws IOException
      * @throws InterruptedException
      */
-    private static ArgumentListBuilder getlaunchArgs(DockerConfiguration config,
+    private static ArgumentListBuilder getlaunchArgs(RemoteDockerBuildWrapper buildWrapper,
+                                                     DockerConfiguration config,
                                                      boolean isMain,
                                                      AbstractDockerLauncher launcher,
                                                      FilePath workspace,
                                                      Optional<DockerNetwork> network) throws IOException, InterruptedException {
         String workspacePath = workspace.getRemote();
+        String workspaceTarget = Optional.ofNullable(
+                                buildWrapper.getWorkspaceOverride())
+                                .orElse(workspacePath);
         //Fully resolve the source workspace
         String workspaceSrc = Paths.get(workspacePath)
                 .toAbsolutePath()
@@ -172,7 +183,7 @@ public class DockerState implements Serializable {
         //TODO Set name? Maybe with build.toString().replaceAll("^\\w", "_")
         ArgumentListBuilder args = new ArgumentListBuilder()
                 .add("run", "-t", "-d")
-                .add("--workdir", workspacePath)
+                .add("--name", Utils.resolveVariables(launcher, "$BUILD_TAG"))
                 //Add bridge network for internet access
                 .add("--network", "bridge");
         //Add inter-container network if needed
@@ -186,7 +197,8 @@ public class DockerState implements Serializable {
                     .toString();
             //Start a shell to block the container, overriding the entrypoint in case the image already defines that
             args.add("--entrypoint", "/bin/sh")
-                    .add("-v", workspaceSrc + ":" + workspacePath)
+                    .add("--workdir", workspaceTarget)
+                    .add("-v", workspaceSrc + ":" + workspaceTarget)
                     ////Jenkins puts scripts here
                     .add("-v", tmpSrc + ":" + tmpDest)
                     .add("-v", secondaryTempSrc + ":" + secondaryTempPath);
@@ -195,12 +207,13 @@ public class DockerState implements Serializable {
         return args;
     }
 
-    private static String launchContainer(DockerConfiguration config,
+    private static String launchContainer(RemoteDockerBuildWrapper buildWrapper,
+                                          DockerConfiguration config,
                                           boolean isMain,
                                           AbstractDockerLauncher launcher,
                                           FilePath workspace,
                                           Optional<DockerNetwork> network) throws IOException, InterruptedException {
-        ArgumentListBuilder args = getlaunchArgs(config, isMain, launcher,
+        ArgumentListBuilder args = getlaunchArgs(buildWrapper, config, isMain, launcher,
                                                  workspace, network);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int status = launcher.executeCommand(args)
@@ -218,7 +231,8 @@ public class DockerState implements Serializable {
         DockerState tempState = new DockerState(launcher.isDebug(),
                                                 containerId,
                                                 ImmutableList.of(containerId),
-                                                Optional.empty());
+                                                Optional.empty(),
+                                                false);
         launcher.configure(tempState);
         config.postCreate(launcher);
         return containerId;
@@ -234,6 +248,7 @@ public class DockerState implements Serializable {
 
     /**
      * Gets all of the container IDs both main and side containers
+     *
      * @return
      */
     public ImmutableList<String> getContainerIds() {

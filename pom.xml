@@ -12,7 +12,7 @@
 
     <groupId>com.gpuopenanalytics.jenkins</groupId>
     <artifactId>remote-docker-plugin</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.0.4-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <name>Remote Docker Build</name>
@@ -91,5 +91,18 @@
         </profile>
     </profiles>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>animal-sniffer-maven-plugin</artifactId>
+                <configuration>
+                    <ignores combine.children="append">
+                        <ignore>com.sun.security.auth.module.UnixSystem</ignore>
+                    </ignores>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

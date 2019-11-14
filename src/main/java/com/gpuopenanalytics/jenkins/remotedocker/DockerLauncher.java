@@ -57,6 +57,7 @@ public class DockerLauncher extends AbstractDockerLauncher {
         this.buildWrapper = buildWrapper;
     }
 
+
     /**
      * Invoke <code>docker exec</code> on the already created container.
      *
@@ -68,6 +69,7 @@ public class DockerLauncher extends AbstractDockerLauncher {
     public Proc dockerExec(Launcher.ProcStarter starter,
                            boolean addRunArgs) throws IOException {
         return super.dockerExec(starter, addRunArgs,
+                                buildWrapper.getWorkspaceOverride(),
                                 buildWrapper.getDockerConfiguration());
     }
 

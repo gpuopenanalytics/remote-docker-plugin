@@ -46,15 +46,18 @@ public class DockerLauncherDecorator extends LauncherDecorator implements Serial
     private DockerState dockerState;
     private DockerConfiguration dockerConfiguration;
     private EnvVars environment;
+    private String workspaceOverride;
 
     public DockerLauncherDecorator(boolean debug,
                                    DockerState dockerState,
                                    DockerConfiguration dockerConfiguration,
-                                   EnvVars environment) {
+                                   EnvVars environment,
+                                   String workspaceOverride) {
         this.debug = debug;
         this.dockerState = dockerState;
         this.dockerConfiguration = dockerConfiguration;
         this.environment = environment;
+        this.workspaceOverride = workspaceOverride;
     }
 
     @Nonnull
@@ -65,7 +68,7 @@ public class DockerLauncherDecorator extends LauncherDecorator implements Serial
             @Override
             public Proc dockerExec(Launcher.ProcStarter starter,
                                    boolean addRunArgs) throws IOException {
-                return super.dockerExec(starter, addRunArgs,
+                return super.dockerExec(starter, addRunArgs, workspaceOverride,
                                         dockerConfiguration);
             }
 

@@ -65,8 +65,11 @@ public class RemoteDockerStepExecution extends StepExecution {
     @Override
     public boolean start() throws Exception {
         RemoteDockerBuildWrapper buildWrapper = new RemoteDockerBuildWrapper(
-                remoteDockerStep.isDebug(), remoteDockerStep.getMain(),
+                remoteDockerStep.isDebug(),
+                remoteDockerStep.getWorkspaceOverride(),
+                remoteDockerStep.getMain(),
                 remoteDockerStep.getSideContainers());
+        buildWrapper.setRemoveContainers(remoteDockerStep.isRemoveContainers());
 
         Launcher launcher = getContext().get(Launcher.class);
         FilePath workspace = getContext().get(FilePath.class);
@@ -83,7 +86,8 @@ public class RemoteDockerStepExecution extends StepExecution {
                 buildWrapper.isDebug(),
                 dockerState,
                 remoteDockerStep.getMain(),
-                environment);
+                environment,
+                remoteDockerStep.getWorkspaceOverride());
 
         LauncherDecorator launcherDecorator = BodyInvoker.mergeLauncherDecorators(
                 getContext().get(LauncherDecorator.class),

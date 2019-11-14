@@ -33,11 +33,13 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -53,21 +55,35 @@ public class RemoteDockerStep extends Step {
     private boolean debug;
     private AbstractDockerConfiguration main;
     private List<SideDockerConfiguration> sideContainers;
+    private String workspaceOverride;
+    private Boolean removeContainers = true;
 
     @DataBoundConstructor
     public RemoteDockerStep(boolean debug,
                             AbstractDockerConfiguration main,
-                            List<SideDockerConfiguration> sideContainers) {
+                            List<SideDockerConfiguration> sideContainers,
+                            String workspaceOverride) {
         this.debug = debug;
         this.main = main;
         this.sideContainers = ImmutableList.copyOf(
                 Optional.ofNullable(sideContainers)
                         .orElse(Collections.emptyList()));
+        this.workspaceOverride = StringUtils.isNotEmpty(
+                workspaceOverride) ? workspaceOverride : null;
     }
 
     @Override
     public StepExecution start(StepContext stepContext) throws Exception {
         return new RemoteDockerStepExecution(stepContext, this);
+    }
+
+    @DataBoundSetter
+    public void setRemoveContainers(Boolean removeContainers) {
+        this.removeContainers = removeContainers;
+    }
+
+    public Boolean isRemoveContainers() {
+        return removeContainers != null ? removeContainers : true;
     }
 
     public boolean isDebug() {
@@ -80,6 +96,10 @@ public class RemoteDockerStep extends Step {
 
     public List<SideDockerConfiguration> getSideContainers() {
         return sideContainers;
+    }
+
+    public String getWorkspaceOverride() {
+        return workspaceOverride;
     }
 
     @Extension
