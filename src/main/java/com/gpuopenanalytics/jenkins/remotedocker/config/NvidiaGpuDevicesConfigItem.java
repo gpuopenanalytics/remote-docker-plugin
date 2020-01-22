@@ -70,19 +70,23 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
     public void addCreateArgs(DockerLauncher launcher,
                               ArgumentListBuilder args,
                               AbstractBuild build) {
-        args.add("-e");
+        String value;
         if ("executor".equals(getValue())) {
             try {
-                String index = build.getEnvironment(launcher.getListener())
+                value = build.getEnvironment(launcher.getListener())
                         .get("EXECUTOR_NUMBER", null);
-                args.addKeyValuePair("", ENV_VAR_NAME, index,
-                                     false);
             } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         } else {
-            args.addKeyValuePair("", ENV_VAR_NAME, getResolvedValue(launcher),
-                                 false);
+            value = getResolvedValue(launcher);
+        }
+
+        if (launcher.getVersion().hasGpuFlag()) {
+            args.add("--gpus", value);
+        } else {
+            args.add("-e");
+            args.addKeyValuePair("", ENV_VAR_NAME, value, false);
         }
     }
 

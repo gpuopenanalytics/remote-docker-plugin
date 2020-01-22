@@ -60,6 +60,7 @@ public class DockerLauncher extends Launcher {
     private TaskListener listener;
     private RemoteDockerBuildWrapper buildWrapper;
     private AbstractBuild build;
+    private DockerVersion version;
 
     private transient Optional<DockerNetwork> network = Optional.empty();
     private transient List<String> containerIds = new ArrayList<>();
@@ -84,6 +85,12 @@ public class DockerLauncher extends Launcher {
         this.delegate = delegate;
         this.listener = listener;
         this.buildWrapper = buildWrapper;
+        try {
+            this.version = parseVersion();
+            getListener().getLogger().println(this.version);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -338,5 +345,26 @@ public class DockerLauncher extends Launcher {
 
     public boolean isDebug() {
         return debug;
+    }
+
+    public DockerVersion getVersion() {
+        return version;
+    }
+
+    private DockerVersion parseVersion() throws IOException, InterruptedException {
+        ArgumentListBuilder args = new ArgumentListBuilder("docker",
+                                                           "--version");
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        int status = executeCommand(args)
+                .stdout(baos)
+                .stderr(getListener().getLogger())
+                .join();
+
+        if (status != 0) {
+            throw new IOException("Could not get docker version");
+        }
+        String versionString = baos.toString(StandardCharsets.UTF_8.name())
+                .trim();
+        return DockerVersion.fromVersionString(versionString);
     }
 }
