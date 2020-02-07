@@ -28,6 +28,9 @@ import java.io.Serializable;
 
 public class DockerVersion implements Serializable {
 
+    public static final DockerVersion DEFAULT = new DockerVersion(0, 0, 0, null,
+                                                                  "0");
+
     private int major;
     private int minor;
     private int patch;
@@ -52,23 +55,28 @@ public class DockerVersion implements Serializable {
      *
      * @return
      */
-    public static DockerVersion fromVersionString(String versionString) {
-        String[] split = versionString.split("\\s");
-        String build = split[split.length - 1];
-        String[] version = split[2].substring(0, split[2].length() - 1).split(
-                "\\.");
-        int major = Integer.parseInt(version[0]);
-        int minor = Integer.parseInt(version[1]);
-        int patch = 0;
-        String extra = null;
-        if (version[2].contains("-")) {
-            patch = Integer.parseInt(
-                    version[2].substring(0, version[2].indexOf('-')));
-            extra = version[2].substring(version[2].indexOf('-') + 1);
-        } else {
-            patch = Integer.parseInt(version[2]);
+    public static DockerVersion fromVersionString(String versionString) throws VersionParseException {
+        try {
+            String[] split = versionString.split("\\s");
+            String build = split[split.length - 1];
+            String[] version = split[2].substring(0, split[2].length() - 1)
+                    .split(
+                            "\\.");
+            int major = Integer.parseInt(version[0]);
+            int minor = Integer.parseInt(version[1]);
+            int patch = 0;
+            String extra = null;
+            if (version[2].contains("-")) {
+                patch = Integer.parseInt(
+                        version[2].substring(0, version[2].indexOf('-')));
+                extra = version[2].substring(version[2].indexOf('-') + 1);
+            } else {
+                patch = Integer.parseInt(version[2]);
+            }
+            return new DockerVersion(major, minor, patch, extra, build);
+        } catch (Exception e) {
+            throw new VersionParseException(versionString, e);
         }
-        return new DockerVersion(major, minor, patch, extra, build);
     }
 
     public String getVersionString() {
@@ -89,6 +97,13 @@ public class DockerVersion implements Serializable {
             return String.format("Docker version %s, build %s",
                                  getVersionString(),
                                  build);
+        }
+    }
+
+    public static class VersionParseException extends Exception {
+
+        public VersionParseException(String version, Throwable cause) {
+            super(String.format("Could not parse '%s'", version), cause);
         }
     }
 }

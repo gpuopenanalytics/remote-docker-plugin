@@ -365,6 +365,13 @@ public class DockerLauncher extends Launcher {
         }
         String versionString = baos.toString(StandardCharsets.UTF_8.name())
                 .trim();
-        return DockerVersion.fromVersionString(versionString);
+        try {
+            return DockerVersion.fromVersionString(versionString);
+        } catch (DockerVersion.VersionParseException e) {
+            getListener().getLogger().println(
+                    "WARN - Could not parse docker version");
+            e.printStackTrace(getListener().getLogger());
+            return DockerVersion.DEFAULT;
+        }
     }
 }
