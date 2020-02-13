@@ -50,7 +50,9 @@ public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher 
         super(launcher);
         try {
             this.version = parseVersion();
-            getListener().getLogger().println(this.version);
+            if (isDebug()) {
+                getListener().getLogger().println(this.version);
+            }
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
