@@ -38,20 +38,24 @@ public class SimpleDockerLauncher extends AbstractDockerLauncher {
 
     private boolean debug;
     private EnvVars environment;
+    private RemoteDockerBuildWrapper buildWrapper;
 
     public SimpleDockerLauncher(@Nonnull Launcher launcher,
                                 boolean debug,
-                                EnvVars environment) {
+                                EnvVars environment,
+                                RemoteDockerBuildWrapper buildWrapper) {
         super(launcher);
         this.debug = debug;
         this.environment = environment;
+        this.buildWrapper=buildWrapper;
     }
 
     @Override
     public Proc dockerExec(ProcStarter starter,
                            boolean addRunArgs) throws IOException {
-        throw new UnsupportedOperationException(
-                "SimpleDockerLauncher cannot execute commands");
+        return super.dockerExec(starter, addRunArgs,
+                                buildWrapper.getWorkspaceOverride(),
+                                buildWrapper.getDockerConfiguration());
     }
 
     @Override

@@ -76,7 +76,7 @@ public class RemoteDockerStepExecution extends StepExecution {
         EnvVars environment = getContext().get(EnvVars.class);
 
         SimpleDockerLauncher simpleDockerLauncher = new SimpleDockerLauncher(
-                launcher, buildWrapper.isDebug(), environment);
+                launcher, buildWrapper.isDebug(), environment, buildWrapper);
 
         dockerState = DockerState.launchContainers(buildWrapper,
                                                    simpleDockerLauncher,
