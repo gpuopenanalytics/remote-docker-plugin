@@ -32,6 +32,8 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.IOException;
+
 /**
  * Defines which GPU devices are visible in the container. Passes
  * <code>-e NVIDIA_VISIBLE_DEVICES=value</code>
@@ -67,14 +69,18 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
     @Override
     public void addCreateArgs(AbstractDockerLauncher launcher,
                               ArgumentListBuilder args) {
-        args.add("-e");
+        String value;
         if ("executor".equals(getValue())) {
-                String index = launcher.getEnvironment().get("EXECUTOR_NUMBER");
-                args.addKeyValuePair("", ENV_VAR_NAME, index,
-                                     false);
+            value = launcher.getEnvironment().get("EXECUTOR_NUMBER");
         } else {
-            args.addKeyValuePair("", ENV_VAR_NAME, getResolvedValue(launcher),
-                                 false);
+            value = getResolvedValue(launcher);
+        }
+
+        if (launcher.getVersion().hasGpuFlag()) {
+            args.add("--gpus", value);
+        } else {
+            args.add("-e");
+            args.addKeyValuePair("", ENV_VAR_NAME, value, false);
         }
     }
 

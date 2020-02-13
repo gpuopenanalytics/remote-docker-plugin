@@ -183,7 +183,6 @@ public class DockerState implements Serializable {
         //TODO Set name? Maybe with build.toString().replaceAll("^\\w", "_")
         ArgumentListBuilder args = new ArgumentListBuilder()
                 .add("run", "-t", "-d")
-                .add("--name", Utils.resolveVariables(launcher, "$BUILD_TAG"))
                 //Add bridge network for internet access
                 .add("--network", "bridge");
         //Add inter-container network if needed

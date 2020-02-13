@@ -57,7 +57,6 @@ public class DockerLauncher extends AbstractDockerLauncher {
         this.buildWrapper = buildWrapper;
     }
 
-
     /**
      * Invoke <code>docker exec</code> on the already created container.
      *
@@ -86,5 +85,4 @@ public class DockerLauncher extends AbstractDockerLauncher {
     public boolean isDebug() {
         return debug;
     }
-
 }

@@ -31,7 +31,9 @@ import hudson.Proc;
 import hudson.util.ArgumentListBuilder;
 
 import javax.annotation.Nonnull;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,9 +44,16 @@ import java.util.Optional;
 public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher {
 
     private DockerState dockerState;
+    private DockerVersion version;
 
     protected AbstractDockerLauncher(@Nonnull Launcher launcher) {
         super(launcher);
+        try {
+            this.version = parseVersion();
+            getListener().getLogger().println(this.version);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected AbstractDockerLauncher(@Nonnull Launcher launcher,
@@ -161,6 +170,34 @@ public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher 
                 //.envs()
                 .cmds(args)
                 .quiet(!isDebug());
+    }
+
+    public DockerVersion getVersion() {
+        return version;
+    }
+
+    private DockerVersion parseVersion() throws IOException, InterruptedException {
+        ArgumentListBuilder args = new ArgumentListBuilder("docker",
+                                                           "--version");
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        int status = executeCommand(args)
+                .stdout(baos)
+                .stderr(getListener().getLogger())
+                .join();
+
+        if (status != 0) {
+            throw new IOException("Could not get docker version");
+        }
+        String versionString = baos.toString(StandardCharsets.UTF_8.name())
+                .trim();
+        try {
+            return DockerVersion.fromVersionString(versionString);
+        } catch (DockerVersion.VersionParseException e) {
+            getListener().getLogger().println(
+                    "WARN - Could not parse docker version");
+            e.printStackTrace(getListener().getLogger());
+            return DockerVersion.DEFAULT;
+        }
     }
 
     /**

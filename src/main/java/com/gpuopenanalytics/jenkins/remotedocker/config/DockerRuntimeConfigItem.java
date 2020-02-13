@@ -60,7 +60,15 @@ public class DockerRuntimeConfigItem extends CustomConfigItem {
     @Override
     public void addCreateArgs(AbstractDockerLauncher launcher,
                               ArgumentListBuilder args) {
-        args.addKeyValuePair("", "--runtime", getResolvedValue(launcher), false);
+        String runtime = getResolvedValue(launcher);
+        if (!launcher.getVersion().hasGpuFlag() || !"nvidia".equals(runtime)) {
+            //If the runtime is nvidia, but the version supports --gpus, ignore the runtime
+            args.addKeyValuePair("", "--runtime", runtime,
+                                 false);
+        } else {
+            launcher.getListener().getLogger().println(
+                    "WARN Runtime is 'nvidia', but docker version supports --gpus. Ignoring 'nvidia' runtime.");
+        }
     }
 
     public String getDockerRuntime(){
