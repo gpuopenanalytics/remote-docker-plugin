@@ -24,9 +24,12 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -76,7 +79,7 @@ public abstract class CustomConfigItem extends ConfigItem {
         return customValue.orElse(value);
     }
 
-    public String getResolvedValue(DockerLauncher launcher) {
+    public String getResolvedValue(AbstractDockerLauncher launcher) {
         return Utils.resolveVariables(launcher, getValue());
     }
 
@@ -100,4 +103,15 @@ public abstract class CustomConfigItem extends ConfigItem {
     public Optional<String> getRawCustomValue() {
         return customValue;
     }
+
+    private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
+        value = (String) ois.readObject();
+        customValue = Optional.ofNullable((String) ois.readObject());
+    }
+
+    private void writeObject(ObjectOutputStream oos) throws IOException {
+        oos.writeObject(value);
+        oos.writeObject(customValue.orElse(null));
+    }
+
 }

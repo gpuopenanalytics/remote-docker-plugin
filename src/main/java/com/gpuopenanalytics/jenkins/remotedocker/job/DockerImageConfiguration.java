@@ -24,16 +24,16 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.job;
 
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import com.gpuopenanalytics.jenkins.remotedocker.config.ConfigItem;
 import com.gpuopenanalytics.jenkins.remotedocker.config.VolumeConfiguration;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
@@ -81,7 +81,7 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
     }
 
     @Override
-    public void setupImage(DockerLauncher launcher,
+    public void setupImage(AbstractDockerLauncher launcher,
                            String localWorkspace) throws IOException, InterruptedException {
         if (isForcePull()) {
             ArgumentListBuilder args = new ArgumentListBuilder();
@@ -98,17 +98,17 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
     }
 
     @Override
-    public void addCreateArgs(DockerLauncher launcher,
-                              ArgumentListBuilder args,
-                              AbstractBuild build) {
+    public void addCreateArgs(AbstractDockerLauncher launcher,
+                              ArgumentListBuilder args) {
         getConfigItemList().stream()
-                .forEach(item -> item.addCreateArgs(launcher, args, build));
+                .forEach(item -> item.addCreateArgs(launcher, args));
         getVolumes().stream()
                 .forEach(item -> item.addArgs(args, launcher));
 
         args.add(Utils.resolveVariables(launcher, getImage()));
     }
 
+    @Symbol("image")
     @Extension
     public static class DescriptorImpl extends AbstractDockerConfigurationDescriptor {
 

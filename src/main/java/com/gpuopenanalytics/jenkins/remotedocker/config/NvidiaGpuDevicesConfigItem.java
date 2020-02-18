@@ -24,12 +24,12 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import hudson.Extension;
-import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
@@ -67,17 +67,11 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
     }
 
     @Override
-    public void addCreateArgs(DockerLauncher launcher,
-                              ArgumentListBuilder args,
-                              AbstractBuild build) {
+    public void addCreateArgs(AbstractDockerLauncher launcher,
+                              ArgumentListBuilder args) {
         String value;
         if ("executor".equals(getValue())) {
-            try {
-                value = build.getEnvironment(launcher.getListener())
-                        .get("EXECUTOR_NUMBER", null);
-            } catch (IOException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            value = launcher.getEnvironment().get("EXECUTOR_NUMBER");
         } else {
             value = getResolvedValue(launcher);
         }
@@ -90,6 +84,15 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
         }
     }
 
+    public String getNvidiaDevices(){
+        return getRawValue();
+    }
+
+    public String getNvidiaDevicesCustom(){
+        return getRawCustomValue().orElse(null);
+    }
+
+    @Symbol("gpus")
     @Extension
     public static class DescriptorImpl extends Descriptor<ConfigItem> {
 

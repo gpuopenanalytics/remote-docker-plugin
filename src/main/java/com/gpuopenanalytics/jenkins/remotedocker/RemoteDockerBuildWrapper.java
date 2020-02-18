@@ -118,7 +118,10 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
     public Launcher decorateLauncher(AbstractBuild build,
                                      Launcher launcher,
                                      BuildListener listener) throws Run.RunnerAbortedException {
-        return new DockerLauncher(debug, build, launcher, listener, this);
+        return new DockerLauncher(debug,
+                                  build,
+                                  launcher,
+                                  this);
     }
 
     @Override
@@ -126,15 +129,10 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
                              Launcher launcher,
                              BuildListener listener) throws IOException, InterruptedException {
         build.addAction(new DockerAction());
-        try {
-            ((DockerLauncher) launcher).launchContainers();
-            return new DockerEnvironment((DockerLauncher) launcher,
-                                         removeContainers);
-        } catch (IOException | InterruptedException e) {
-            //Attempt tearDown in case we partially started some containers
-            ((DockerLauncher) launcher).tearDown(true);
-            throw e;
-        }
+        DockerState state = DockerState.launchContainers(this,
+                                                         (AbstractDockerLauncher) launcher,
+                                                         build.getWorkspace());
+        return new DockerEnvironment((DockerLauncher) launcher, state);
     }
 
     /**
@@ -143,18 +141,18 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
     private class DockerEnvironment extends BuildWrapper.Environment {
 
         private DockerLauncher launcher;
-        private boolean removeContainers;
+        private DockerState dockerState;
 
         public DockerEnvironment(DockerLauncher launcher,
-                                 boolean removeContainers) {
+                                 DockerState dockerState) {
             this.launcher = launcher;
-            this.removeContainers = removeContainers;
+            this.dockerState = dockerState;
         }
 
         @Override
         public boolean tearDown(AbstractBuild build,
                                 BuildListener listener) throws IOException, InterruptedException {
-            this.launcher.tearDown(removeContainers);
+            dockerState.tearDown(launcher.getInner());
             return true;
         }
     }

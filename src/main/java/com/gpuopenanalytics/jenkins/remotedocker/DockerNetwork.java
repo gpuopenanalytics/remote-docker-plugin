@@ -43,14 +43,14 @@ public class DockerNetwork {
     }
 
     /**
-     * Create a bridge network using the specified {@link DockerLauncher}
+     * Create a bridge network using the specified {@link AbstractDockerLauncher}
      *
      * @param launcher
      * @return
      * @throws IOException
      * @throws InterruptedException
      */
-    public static DockerNetwork create(DockerLauncher launcher) throws IOException, InterruptedException {
+    public static DockerNetwork create(AbstractDockerLauncher launcher) throws IOException, InterruptedException {
         ArgumentListBuilder args = new ArgumentListBuilder();
         args.add("docker", "network", "create", UUID.randomUUID().toString());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -64,6 +64,16 @@ public class DockerNetwork {
         }
         String id = baos.toString(StandardCharsets.UTF_8.name()).trim();
 
+        return new DockerNetwork(id);
+    }
+
+    /**
+     * Create a {@link DockerNetwork} if you already have an ID
+     *
+     * @param id
+     * @return
+     */
+    public static DockerNetwork fromExisting(String id) {
         return new DockerNetwork(id);
     }
 
@@ -90,4 +100,7 @@ public class DockerNetwork {
         }
     }
 
+    public String getId() {
+        return id;
+    }
 }

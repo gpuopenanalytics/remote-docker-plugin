@@ -48,14 +48,8 @@ public class Utils {
      * @param s
      * @return
      */
-    public static String resolveVariables(DockerLauncher launcher, String s) {
-        try {
-            return launcher.getBuild()
-                    .getEnvironment(launcher.getListener())
-                    .expand(s);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+    public static String resolveVariables(AbstractDockerLauncher launcher, String s) {
+        return launcher.getEnvironment().expand(s);
     }
 
     /**

@@ -25,13 +25,13 @@
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
 import com.google.common.collect.ImmutableList;
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
-import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.ListBoxModel;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.List;
@@ -48,7 +48,8 @@ public class CudaVersionConfigItem extends ConfigItem {
                                                                        "9.0",
                                                                        "9.1",
                                                                        "9.2",
-                                                                       "10.0");
+                                                                       "10.0",
+                                                                       "10.1");
     private static ListBoxModel CUDA_OPTIONS = new ListBoxModel(
             CUDA_VERSIONS.stream()
                     .map(ListBoxModel.Option::new)
@@ -75,14 +76,14 @@ public class CudaVersionConfigItem extends ConfigItem {
     }
 
     @Override
-    public void addCreateArgs(DockerLauncher launcher,
-                              ArgumentListBuilder args,
-                              AbstractBuild build) {
+    public void addCreateArgs(AbstractDockerLauncher launcher,
+                              ArgumentListBuilder args) {
         args.add("-e");
         String cuda = Utils.resolveVariables(launcher, nvidiaCuda);
         args.addKeyValuePair("", ENV_VAR_NAME, "cuda>="+cuda, false);
     }
 
+    @Symbol("cudaVersion")
     @Extension
     public static class DescriptorImpl extends Descriptor<ConfigItem> {
 

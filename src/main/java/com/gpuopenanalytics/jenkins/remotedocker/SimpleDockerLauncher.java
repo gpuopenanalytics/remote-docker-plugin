@@ -27,45 +27,31 @@ package com.gpuopenanalytics.jenkins.remotedocker;
 import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.Proc;
-import hudson.model.AbstractBuild;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 
 /**
- * A Jenkins {@link Launcher} that delegates into a running docker container
+ * Simple {@link AbstractDockerLauncher} which cannot execute commands inside of a container
  */
-public class DockerLauncher extends AbstractDockerLauncher {
+public class SimpleDockerLauncher extends AbstractDockerLauncher {
 
     private boolean debug;
+    private EnvVars environment;
     private RemoteDockerBuildWrapper buildWrapper;
-    private AbstractBuild build;
 
-    /**
-     * @param debug
-     * @param build
-     * @param delegate     the launcher on the node executing the job
-     * @param buildWrapper the {@link RemoteDockerBuildWrapper} currently
-     *                     running
-     */
-    public DockerLauncher(boolean debug,
-                          AbstractBuild build,
-                          Launcher delegate,
-                          RemoteDockerBuildWrapper buildWrapper) {
-        super(delegate);
+    public SimpleDockerLauncher(@Nonnull Launcher launcher,
+                                boolean debug,
+                                EnvVars environment,
+                                RemoteDockerBuildWrapper buildWrapper) {
+        super(launcher);
         this.debug = debug;
-        this.build = build;
-        this.buildWrapper = buildWrapper;
+        this.environment = environment;
+        this.buildWrapper=buildWrapper;
     }
 
-    /**
-     * Invoke <code>docker exec</code> on the already created container.
-     *
-     * @param starter
-     * @param addRunArgs
-     * @return
-     * @throws IOException
-     */
-    public Proc dockerExec(Launcher.ProcStarter starter,
+    @Override
+    public Proc dockerExec(ProcStarter starter,
                            boolean addRunArgs) throws IOException {
         return super.dockerExec(starter, addRunArgs,
                                 buildWrapper.getWorkspaceOverride(),
@@ -74,11 +60,7 @@ public class DockerLauncher extends AbstractDockerLauncher {
 
     @Override
     public EnvVars getEnvironment() {
-        try {
-            return build.getEnvironment(listener);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        return environment;
     }
 
     @Override

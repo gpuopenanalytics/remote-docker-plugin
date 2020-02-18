@@ -25,10 +25,9 @@
 package com.gpuopenanalytics.jenkins.remotedocker.job;
 
 import com.google.common.collect.Lists;
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.config.ConfigItem;
 import com.gpuopenanalytics.jenkins.remotedocker.config.VolumeConfiguration;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractDescribableImpl;
 import hudson.util.ArgumentListBuilder;
 
@@ -58,19 +57,17 @@ public abstract class AbstractDockerConfiguration extends AbstractDescribableImp
     }
 
     @Override
-    public void postCreate(DockerLauncher launcher,
-                           AbstractBuild build) throws IOException, InterruptedException {
+    public void postCreate(AbstractDockerLauncher launcher) throws IOException, InterruptedException {
         for (ConfigItem item : configItemList) {
-            item.postCreate(launcher, build);
+            item.postCreate(launcher);
         }
     }
 
     @Override
-    public void addRunArgs(DockerLauncher launcher,
-                           ArgumentListBuilder args,
-                           AbstractBuild build) {
+    public void addRunArgs(AbstractDockerLauncher launcher,
+                           ArgumentListBuilder args) {
         for (ConfigItem item : configItemList) {
-            item.addRunArgs(launcher, args, build);
+            item.addRunArgs(launcher, args);
         }
     }
 

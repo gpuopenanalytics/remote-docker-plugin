@@ -24,13 +24,13 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
-import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import hudson.util.QuotedStringTokenizer;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.List;
@@ -59,9 +59,8 @@ public class ExtraDockerArgsConfigItem extends ConfigItem {
     }
 
     @Override
-    public void addCreateArgs(DockerLauncher launcher,
-                              ArgumentListBuilder args,
-                              AbstractBuild build) {
+    public void addCreateArgs(AbstractDockerLauncher launcher,
+                              ArgumentListBuilder args) {
         List<String> newArgs = Stream.of(
                 QuotedStringTokenizer.tokenize(extraArgs))
                 .map(s -> Utils.resolveVariables(launcher, s))
@@ -69,6 +68,7 @@ public class ExtraDockerArgsConfigItem extends ConfigItem {
         args.add(newArgs);
     }
 
+    @Symbol("args")
     @Extension
     public static class DescriptorImpl extends Descriptor<ConfigItem> {
 
