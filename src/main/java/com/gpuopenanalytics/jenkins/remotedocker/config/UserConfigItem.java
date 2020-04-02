@@ -25,10 +25,9 @@
 package com.gpuopenanalytics.jenkins.remotedocker.config;
 
 import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
-import com.gpuopenanalytics.jenkins.remotedocker.DockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
-import hudson.model.AbstractBuild;
+import hudson.Launcher;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import net.sf.json.JSONObject;
@@ -39,7 +38,10 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public class UserConfigItem extends ConfigItem {
 
@@ -145,15 +147,33 @@ public class UserConfigItem extends ConfigItem {
         }
     }
 
+    private String executeWithOutput(Launcher launcher, String... args) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            int status = launcher.launch()
+                    .cmds(args)
+                    .stdout(baos)
+                    .stderr(launcher.getListener().getLogger())
+                    .join();
+            if (status != 0) {
+                throw new RuntimeException(
+                        "Non-zero status " + status + ": " + Arrays
+                                .toString(args));
+            }
+            return baos.toString(StandardCharsets.UTF_8.name()).trim();
+        } catch (InterruptedException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public void addRunArgs(AbstractDockerLauncher launcher,
                            ArgumentListBuilder args) {
         if (!isCurrentUser()) {
             args.add("--user", Utils.resolveVariables(launcher, username));
         } else {
-            com.sun.security.auth.module.UnixSystem unix = new com.sun.security.auth.module.UnixSystem();
-            long uid = unix.getUid();
-            long gid = unix.getGid();
+            String uid = executeWithOutput(launcher.getInner(), "id", "-u");
+            String gid = executeWithOutput(launcher.getInner(), "id", "-g");
             args.add("--user", uid + ":" + gid);
         }
     }
