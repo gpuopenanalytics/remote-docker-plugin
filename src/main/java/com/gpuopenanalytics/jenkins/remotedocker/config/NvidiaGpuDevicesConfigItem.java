@@ -32,8 +32,6 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import java.io.IOException;
-
 /**
  * Defines which GPU devices are visible in the container. Passes
  * <code>-e NVIDIA_VISIBLE_DEVICES=value</code>
@@ -77,18 +75,18 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
         }
 
         if (launcher.getVersion().hasGpuFlag()) {
-            args.add("--gpus", value);
+            args.add("--gpus", "device=" + value);
         } else {
             args.add("-e");
             args.addKeyValuePair("", ENV_VAR_NAME, value, false);
         }
     }
 
-    public String getNvidiaDevices(){
+    public String getNvidiaDevices() {
         return getRawValue();
     }
 
-    public String getNvidiaDevicesCustom(){
+    public String getNvidiaDevicesCustom() {
         return getRawCustomValue().orElse(null);
     }
 
