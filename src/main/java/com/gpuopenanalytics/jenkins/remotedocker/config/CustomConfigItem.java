@@ -26,10 +26,8 @@ package com.gpuopenanalytics.jenkins.remotedocker.config;
 
 import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.Utils;
+import org.apache.commons.lang.StringUtils;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -41,14 +39,15 @@ public abstract class CustomConfigItem extends ConfigItem {
     public static final String CUSTOM_VALUE_INDICATOR = "custom";
 
     private String value;
-    private Optional<String> customValue;
+    private transient Optional<String> customValue;
+    private String customVal;
 
     public CustomConfigItem(String value, String customValue) {
         this.value = value;
-        if (CUSTOM_VALUE_INDICATOR.equals(value)) {
-            this.customValue = Optional.ofNullable(customValue);
+        if (StringUtils.isEmpty(customValue)) {
+            this.customVal = null;
         } else {
-            this.customValue = Optional.empty();
+            this.customVal = customValue;
         }
     }
 
@@ -58,7 +57,7 @@ public abstract class CustomConfigItem extends ConfigItem {
      * @return
      */
     public boolean isCustom() {
-        return customValue.isPresent();
+        return CUSTOM_VALUE_INDICATOR.equals(value);
     }
 
     /**
@@ -76,7 +75,7 @@ public abstract class CustomConfigItem extends ConfigItem {
      * @return
      */
     public String getValue() {
-        return customValue.orElse(value);
+        return Optional.ofNullable(customVal).orElse(value);
     }
 
     public String getResolvedValue(AbstractDockerLauncher launcher) {
@@ -101,17 +100,13 @@ public abstract class CustomConfigItem extends ConfigItem {
      * Used to get the raw custom value. Prefer {@link #getValue()} over this.
      */
     public Optional<String> getRawCustomValue() {
-        return customValue;
+        return Optional.ofNullable(customVal);
     }
 
-    private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
-        value = (String) ois.readObject();
-        customValue = Optional.ofNullable((String) ois.readObject());
+    protected Object readResolve() {
+        if (customValue != null) {
+            customVal = customValue.orElse(null);
+        }
+        return this;
     }
-
-    private void writeObject(ObjectOutputStream oos) throws IOException {
-        oos.writeObject(value);
-        oos.writeObject(customValue.orElse(null));
-    }
-
 }
