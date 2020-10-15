@@ -24,6 +24,7 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker;
 
+import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.google.common.collect.ImmutableList;
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfiguration;
 import com.gpuopenanalytics.jenkins.remotedocker.job.SideDockerConfiguration;
@@ -34,6 +35,7 @@ import hudson.model.TaskListener;
 import hudson.slaves.WorkspaceList;
 import hudson.util.ArgumentListBuilder;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -58,17 +60,20 @@ public class DockerState implements Serializable {
     private ImmutableList<String> containerIds;
     private String networkId;
     private boolean removeContainers;
+    private FilePath loginTempDir;
 
     public DockerState(boolean debug,
                        String mainContainerId,
                        Collection<String> containerIds,
                        Optional<DockerNetwork> network,
-                       boolean removeContainers) {
+                       boolean removeContainers,
+                       FilePath loginTempDir) {
         this.debug = debug;
         this.mainContainerId = mainContainerId;
         this.containerIds = ImmutableList.copyOf(containerIds);
         this.networkId = network.map(DockerNetwork::getId).orElse(null);
         this.removeContainers = removeContainers;
+        this.loginTempDir=loginTempDir;
     }
 
     private int execute(Launcher launcher,
@@ -84,7 +89,7 @@ public class DockerState implements Serializable {
         return status;
     }
 
-    public void tearDown(Launcher launcher) throws IOException, InterruptedException {
+    public void tearDown(AbstractDockerLauncher launcher) throws IOException, InterruptedException {
         if (removeContainers) {
             TaskListener listener = launcher.getListener();
             for (String containerId : containerIds) {
@@ -105,6 +110,56 @@ public class DockerState implements Serializable {
                 }
             }
         }
+        logout(launcher);
+    }
+
+    private void logout(Launcher launcher) throws IOException, InterruptedException {
+        ArgumentListBuilder args = new ArgumentListBuilder("docker", "logout");
+        int status = execute(launcher, args);
+        if (status != 0) {
+            launcher.getListener().error("Failed to docker logout");
+        }
+    }
+
+    /**
+     * Attempt to <code>docker login</code>. Returns the temporary directory to
+     * use for <code>HOME</code> to store docker credentials.
+     *
+     * @param buildWrapper
+     * @param launcher
+     * @param workspace
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private static FilePath login(RemoteDockerBuildWrapper buildWrapper,
+                              AbstractDockerLauncher launcher,
+                              FilePath workspace) throws IOException, InterruptedException {
+        if (buildWrapper.getCredentialsId() != null) {
+            UsernamePasswordCredentials creds = buildWrapper.getCredentials();
+            FilePath tempDir = WorkspaceList.tempDir(workspace);
+            launcher.configureTempDir(tempDir);
+            ArgumentListBuilder args = new ArgumentListBuilder("docker", "login");
+            args.add("-u", creds.getUsername());
+            args.add("-p");
+            args.addMasked(creds.getPassword());
+            if (!StringUtils.isEmpty(buildWrapper.getDockerRegistryUrl())) {
+                args.add(buildWrapper.getDockerRegistryUrl());
+            }
+            Launcher.ProcStarter cmd = launcher.executeCommand(args);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            cmd.stdout(launcher.getListener());
+            cmd.stderr(baos);
+            int status = cmd.join();
+            if (status != 0) {
+                launcher.getListener().error("Failed to docker login");
+                launcher.getListener().error(baos.toString());
+                throw new RuntimeException(
+                        "Could not docker login. Are your credentials correct?");
+            }
+            return tempDir;
+        }
+        return null;
     }
 
     /**
@@ -116,6 +171,8 @@ public class DockerState implements Serializable {
     public static DockerState launchContainers(RemoteDockerBuildWrapper buildWrapper,
                                                AbstractDockerLauncher launcher,
                                                FilePath workspace) throws IOException, InterruptedException {
+        FilePath loginTempDir = login(buildWrapper, launcher, workspace);
+
         Optional<DockerNetwork> network = Optional.empty();
         if (!buildWrapper.getSideDockerConfigurations().isEmpty()) {
             //There are side container, so create a network
@@ -124,14 +181,16 @@ public class DockerState implements Serializable {
         List<String> containerIds = new ArrayList<>();
         //Launch side containers first
         for (SideDockerConfiguration side : buildWrapper.getSideDockerConfigurations()) {
-            String id = launchContainer(buildWrapper, side, false, launcher, workspace,
+            String id = launchContainer(buildWrapper, side, false, launcher,
+                                        workspace,
                                         network);
             containerIds.add(id);
         }
 
         //Launch main container
         DockerConfiguration main = buildWrapper.getDockerConfiguration();
-        String mainId = launchContainer(buildWrapper, main, true, launcher, workspace,
+        String mainId = launchContainer(buildWrapper, main, true, launcher,
+                                        workspace,
                                         network);
         containerIds.add(mainId);
         Collections.reverse(containerIds);
@@ -139,7 +198,8 @@ public class DockerState implements Serializable {
         DockerState dockerState = new DockerState(buildWrapper.isDebug(),
                                                   mainId, containerIds,
                                                   network,
-                                                  buildWrapper.isRemoveContainers());
+                                                  buildWrapper.isRemoveContainers(),
+                                                  loginTempDir);
         launcher.configure(dockerState);
         return dockerState;
     }
@@ -159,8 +219,8 @@ public class DockerState implements Serializable {
                                                      Optional<DockerNetwork> network) throws IOException, InterruptedException {
         String workspacePath = workspace.getRemote();
         String workspaceTarget = Optional.ofNullable(
-                                buildWrapper.getWorkspaceOverride())
-                                .orElse(workspacePath);
+                buildWrapper.getWorkspaceOverride())
+                .orElse(workspacePath);
         //Fully resolve the source workspace
         String workspaceSrc = Paths.get(workspacePath)
                 .toAbsolutePath()
@@ -212,7 +272,8 @@ public class DockerState implements Serializable {
                                           AbstractDockerLauncher launcher,
                                           FilePath workspace,
                                           Optional<DockerNetwork> network) throws IOException, InterruptedException {
-        ArgumentListBuilder args = getlaunchArgs(buildWrapper, config, isMain, launcher,
+        ArgumentListBuilder args = getlaunchArgs(buildWrapper, config, isMain,
+                                                 launcher,
                                                  workspace, network);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int status = launcher.executeCommand(args)
@@ -231,7 +292,8 @@ public class DockerState implements Serializable {
                                                 containerId,
                                                 ImmutableList.of(containerId),
                                                 Optional.empty(),
-                                                false);
+                                                false,
+                                                null);
         launcher.configure(tempState);
         config.postCreate(launcher);
         return containerId;
@@ -258,4 +320,7 @@ public class DockerState implements Serializable {
         return Optional.ofNullable(networkId);
     }
 
+    public FilePath getLoginTempDir() {
+        return loginTempDir;
+    }
 }

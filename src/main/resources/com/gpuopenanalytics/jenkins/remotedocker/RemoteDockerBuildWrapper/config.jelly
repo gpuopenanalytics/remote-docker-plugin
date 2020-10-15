@@ -24,7 +24,8 @@
   -->
 
 <j:jelly xmlns:j="jelly:core"
-         xmlns:f="/lib/form">
+         xmlns:f="/lib/form"
+         xmlns:c="/lib/credentials">
 
     <f:dropdownDescriptorSelector title="Build container"
                                   field="dockerConfiguration"
@@ -43,9 +44,19 @@
     <f:entry title="Debug" field="debug">
         <f:checkbox/>
     </f:entry>
-    <f:optionalBlock name="workspaceOverrideOptional" title="Override workspace mount" inline="true" checked="${!empty(instance.workspaceOverride)}">
+    <f:optionalBlock name="workspaceOverrideOptional" title="Override workspace mount" inline="true"
+                     checked="${!empty(instance.workspaceOverride)}">
         <f:entry title="Workspace path" field="workspaceOverride">
             <f:textbox/>
+        </f:entry>
+    </f:optionalBlock>
+    <f:optionalBlock name="dockerLoginOptional" title="Docker Login" inline="true"
+                     checked="${!empty(instance.dockerRegistryUrl) or !empty(instance.credentialsId)}">
+        <f:entry title="Registry Url" field="dockerRegistryUrl">
+            <f:textbox/>
+        </f:entry>
+        <f:entry title="Credentials" field="credentialsId">
+            <c:select/>
         </f:entry>
     </f:optionalBlock>
 

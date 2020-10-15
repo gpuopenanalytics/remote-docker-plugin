@@ -24,6 +24,12 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker;
 
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.gpuopenanalytics.jenkins.remotedocker.job.AbstractDockerConfiguration;
 import com.gpuopenanalytics.jenkins.remotedocker.job.AbstractDockerConfigurationDescriptor;
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerImageConfiguration;
@@ -34,17 +40,23 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor;
+import hudson.model.Item;
 import hudson.model.Run;
+import hudson.security.ACL;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
+import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -59,6 +71,9 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
 
     private static final String WORKSPACE_OVERRIDE_FIELD = "workspaceOverride";
     private static final String WORKSPACE_OVERRIDE_OPTIONAL_FIELD = "workspaceOverrideOptional";
+    private static final String DOCKER_REGISTRY_URL_FIELD = "dockerRegistryUrl";
+    private static final String CREDENTIALS_ID_FIELD = "credentialsId";
+    private static final String DOCKER_LOGIN_OPTIONAL_FIELD = "dockerLoginOptional";
 
     private boolean debug;
     private String workspaceOverride;
@@ -66,11 +81,16 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
     private AbstractDockerConfiguration dockerConfiguration;
     private List<SideDockerConfiguration> sideDockerConfigurations;
 
+    private String dockerRegistryUrl;
+    private String credentialsId;
+
     @DataBoundConstructor
     public RemoteDockerBuildWrapper(boolean debug,
                                     String workspaceOverride,
                                     AbstractDockerConfiguration dockerConfiguration,
-                                    List<SideDockerConfiguration> sideDockerConfigurations) {
+                                    List<SideDockerConfiguration> sideDockerConfigurations,
+                                    String dockerRegistryUrl,
+                                    String credentialsId) {
         this.debug = debug;
         this.workspaceOverride = StringUtils.isNotEmpty(
                 workspaceOverride) ? workspaceOverride : null;
@@ -78,6 +98,8 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
         this.sideDockerConfigurations = Optional.ofNullable(
                 sideDockerConfigurations)
                 .orElse(Collections.emptyList());
+        this.dockerRegistryUrl = dockerRegistryUrl;
+        this.credentialsId = credentialsId;
     }
 
     public boolean isDebug() {
@@ -103,6 +125,27 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
 
     public List<SideDockerConfiguration> getSideDockerConfigurations() {
         return sideDockerConfigurations;
+    }
+
+    public UsernamePasswordCredentials getCredentials() {
+        List<UsernamePasswordCredentials> allCredentials = CredentialsProvider
+                .lookupCredentials(UsernamePasswordCredentials.class,
+                                   Jenkins.get(),
+                                   ACL.SYSTEM, Collections.emptyList());
+        UsernamePasswordCredentials credentials = CredentialsMatchers.firstOrNull(
+                allCredentials,
+                CredentialsMatchers.allOf(
+                        CredentialsMatchers
+                                .withId(credentialsId)));
+        return credentials;
+    }
+
+    public String getDockerRegistryUrl() {
+        return dockerRegistryUrl;
+    }
+
+    public String getCredentialsId() {
+        return credentialsId;
     }
 
     private void validate() throws Descriptor.FormException {
@@ -152,7 +195,7 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
         @Override
         public boolean tearDown(AbstractBuild build,
                                 BuildListener listener) throws IOException, InterruptedException {
-            dockerState.tearDown(launcher.getInner());
+            dockerState.tearDown(launcher);
             return true;
         }
     }
@@ -180,6 +223,11 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
                 //If the box is unchecked, override whatever value might have been entered
                 formData.remove(WORKSPACE_OVERRIDE_FIELD);
             }
+            if (!formData.getBoolean(DOCKER_LOGIN_OPTIONAL_FIELD)) {
+                //If the box is unchecked, delete registry & credentials
+                formData.remove(DOCKER_REGISTRY_URL_FIELD);
+                formData.remove(CREDENTIALS_ID_FIELD);
+            }
             RemoteDockerBuildWrapper wrapper = (RemoteDockerBuildWrapper) super.newInstance(
                     req, formData);
             wrapper.validate();
@@ -197,6 +245,21 @@ public class RemoteDockerBuildWrapper extends BuildWrapper {
         public Descriptor getDefaultDockerConfigurationDescriptor() {
             return Jenkins.get().getDescriptorOrDie(
                     DockerImageConfiguration.class);
+        }
+
+        public ListBoxModel doFillCredentialsIdItems(
+                @AncestorInPath Jenkins context,
+                @QueryParameter String credentialsId) {
+            if (context == null || !context.hasPermission(Item.CONFIGURE)) {
+                return new StandardListBoxModel();
+            }
+
+            List<DomainRequirement> domainRequirements = new ArrayList<>();
+            return new StandardListBoxModel()
+                    .includeEmptyValue()
+                    .includeAs(ACL.SYSTEM, Jenkins.get(),
+                               UsernamePasswordCredentialsImpl.class)
+                    .includeCurrentValue(credentialsId);
         }
     }
 

@@ -26,6 +26,7 @@ package com.gpuopenanalytics.jenkins.remotedocker;
 
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfiguration;
 import hudson.EnvVars;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Proc;
 import hudson.util.ArgumentListBuilder;
@@ -45,6 +46,7 @@ public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher 
 
     private DockerState dockerState;
     private DockerVersion version;
+    private FilePath loginTempDir;
 
     protected AbstractDockerLauncher(@Nonnull Launcher launcher) {
         super(launcher);
@@ -167,6 +169,9 @@ public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher 
         if (!"docker".equals(args.toList().get(0))) {
             args.prepend("docker");
         }
+        if (loginTempDir != null) {
+            args.prepend("env", "HOME=" + loginTempDir.getRemote());
+        }
         return getInner().launch()
                 //TODO I think we should pass something here
                 //.envs()
@@ -223,6 +228,7 @@ public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher 
      */
     void configure(DockerState dockerState) {
         this.dockerState = dockerState;
+        configureTempDir(dockerState.getLoginTempDir());
     }
 
     /**
@@ -232,5 +238,9 @@ public abstract class AbstractDockerLauncher extends Launcher.DecoratedLauncher 
      */
     protected DockerState getDockerState() {
         return dockerState;
+    }
+
+    public void configureTempDir(FilePath loginTempDir) {
+        this.loginTempDir = loginTempDir;
     }
 }
