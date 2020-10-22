@@ -30,5 +30,11 @@
         <f:checkbox/>
     </f:entry>
 
+    <f:optionalBlock field="forcePull" title="Force pull">
+        <f:entry title="Max pull retries" field="maxRetries">
+            <f:textbox default="1"/>
+        </f:entry>
+    </f:optionalBlock>
+
 </j:jelly>
 
