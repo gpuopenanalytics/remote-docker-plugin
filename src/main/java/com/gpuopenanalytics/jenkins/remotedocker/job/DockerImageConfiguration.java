@@ -113,10 +113,10 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
         if (isForcePull()) {
             ArgumentListBuilder args = new ArgumentListBuilder();
             String image = Utils.resolveVariables(launcher, getImage());
-	    String maxRetries = Utils.resolveVariables(launcher, getRetries());
-	    args.add("docker", "pull", image);
-	    int numRetries = Integer.parseInt(maxRetries);
-	    int retries = 0;
+            String maxRetries = Utils.resolveVariables(launcher, getRetries());
+            args.add("docker", "pull", image);
+            int numRetries = Integer.parseInt(maxRetries);
+            int retries = 0;
             int status;
 
             Launcher.ProcStarter proc = launcher.executeCommand(args)
@@ -124,7 +124,7 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
                         .stdout(launcher.getListener());
             status = proc.join();
 
-	    while (retries < numRetries && status != 0) {
+            while (retries < numRetries && status != 0) {
                 launcher.getListener().getLogger().println("Docker pull failed, retrying...");
                 retries += 1;
 
@@ -132,9 +132,9 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
                         .stderr(launcher.getListener().getLogger())
                         .stdout(launcher.getListener());
                 status = proc.join();
-	    }
+            }
 
-	    if (status != 0) {
+            if (status != 0) {
                 throw new IOException("Could not pull image: " + image);
             }
         }
