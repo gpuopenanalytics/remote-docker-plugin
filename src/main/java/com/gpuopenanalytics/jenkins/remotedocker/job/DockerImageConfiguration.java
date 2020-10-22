@@ -123,7 +123,6 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
                         .stderr(launcher.getListener().getLogger())
                         .stdout(launcher.getListener());
             status = proc.join();
-            status = 1;
 
 	    while (retries < numRetries && status != 0) {
                 launcher.getListener().getLogger().println("Docker pull failed, retrying...");
@@ -133,7 +132,6 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
                         .stderr(launcher.getListener().getLogger())
                         .stdout(launcher.getListener());
                 status = proc.join();
-		status = 1;
 	    }
 
 	    if (status != 0) {
