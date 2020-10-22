@@ -46,26 +46,41 @@ import java.util.List;
 public class DockerImageConfiguration extends AbstractDockerConfiguration {
 
     private final String image;
-    private final boolean forcePull;
+    private final String maxRetries;
+    private final boolean pullImage;
 
     @DataBoundConstructor
     public DockerImageConfiguration(List<ConfigItem> configItemList,
                                     List<VolumeConfiguration> volumes,
                                     String image,
-                                    boolean forcePull,
-				    String maxRetries) {
+                                    ForcePull forcePull) {
         super(configItemList, volumes);
         this.image = image;
-        this.forcePull = forcePull;
-	this.maxRetries = maxRetries;
+        if (forcePull != null ) {
+            this.maxRetries = forcePull.maxRetries;
+            this.pullImage = true;
+        }
+        else {
+            this.maxRetries = "0";
+            this.pullImage = false;
+        }
+    }
+    
+    public static class ForcePull {
+        private String maxRetries;
+
+        @DataBoundConstructor
+        public ForcePull(String maxRetries) {
+            this.maxRetries = maxRetries;
+        }
+    }
+
+    public boolean isForcePull() {
+        return pullImage;
     }
 
     public String getImage() {
         return image;
-    }
-
-    public boolean isForcePull() {
-        return forcePull;
     }
 
     public String getRetries() {
@@ -85,10 +100,10 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
             volume.validate();
         }
 	if (StringUtils.isEmpty(maxRetries)) {
-            throw new Descriptor.FormException("Max Retries cannot be empty");
+            throw new Descriptor.FormException("Max Retries cannot be empty", "maxRetries");
 	}
-	if (!StringUtils.isInteger(maxRetries)) {
-	    throw new Descriptor.FormException("Max Retries must be an integer");
+	if (!StringUtils.isNumeric(maxRetries)) {
+	    throw new Descriptor.FormException("Max Retries must be an integer", "maxRetries");
 	}
     }
 
@@ -102,18 +117,23 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
 	    args.add("docker", "pull", image);
 	    int numRetries = Integer.parseInt(maxRetries);
 	    int retries = 0;
-	    int status;
+            int status;
+
+            Launcher.ProcStarter proc = launcher.executeCommand(args)
+                        .stderr(launcher.getListener().getLogger())
+                        .stdout(launcher.getListener());
+            status = proc.join();
+            status = 1;
 
 	    while (retries < numRetries && status != 0) {
-	        retries += 1;
-		Launcher.ProcStarter proc = launcher.executeCommand(args)
+                launcher.getListener().getLogger().println("Docker pull failed, retrying...");
+                retries += 1;
+
+                proc = launcher.executeCommand(args)
                         .stderr(launcher.getListener().getLogger())
                         .stdout(launcher.getListener());
                 status = proc.join();
-		if (status != 0 && retries != numRetries) {
-                    launcher.getListener().getLogger().println("Docker pull failed, ",
-				                               "retrying...");
-		}
+		status = 1;
 	    }
 
 	    if (status != 0) {
