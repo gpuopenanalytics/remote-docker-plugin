@@ -72,7 +72,8 @@ public class RemoteDockerStepExecution extends StepExecution {
                 remoteDockerStep.getWorkspaceOverride(),
                 remoteDockerStep.getMain(),
                 remoteDockerStep.getSideContainers(),
-                null, null);
+                remoteDockerStep.getRegistryUrl(),
+                remoteDockerStep.getCredentialsId());
         buildWrapper.setRemoveContainers(remoteDockerStep.isRemoveContainers());
 
         Launcher launcher = getContext().get(Launcher.class);
@@ -142,7 +143,7 @@ public class RemoteDockerStepExecution extends StepExecution {
 
             @Override
             public EnvVars getEnvironment() {
-                return null;
+                return new EnvVars();
             }
 
             @Override

@@ -73,7 +73,7 @@ public class DockerState implements Serializable {
         this.containerIds = ImmutableList.copyOf(containerIds);
         this.networkId = network.map(DockerNetwork::getId).orElse(null);
         this.removeContainers = removeContainers;
-        this.loginTempDir=loginTempDir;
+        this.loginTempDir = loginTempDir;
     }
 
     private int execute(Launcher launcher,
@@ -95,7 +95,7 @@ public class DockerState implements Serializable {
             for (String containerId : containerIds) {
                 ArgumentListBuilder args = new ArgumentListBuilder()
                         .add("docker", "rm", "-f", containerId);
-                int status = execute(launcher, args);
+                int status = execute(launcher.getInner(), args);
                 if (status != 0) {
                     listener.error("Failed to remove container %s",
                                    containerId);
@@ -104,20 +104,26 @@ public class DockerState implements Serializable {
             if (networkId != null) {
                 ArgumentListBuilder args = new ArgumentListBuilder()
                         .add("docker", "network", "rm", networkId);
-                int status = execute(launcher, args);
+                int status = execute(launcher.getInner(), args);
                 if (status != 0) {
                     listener.error("Failed to remove network %s", networkId);
                 }
             }
         }
-        logout(launcher);
+        logout(launcher.getInner());
     }
 
     private void logout(Launcher launcher) throws IOException, InterruptedException {
-        ArgumentListBuilder args = new ArgumentListBuilder("docker", "logout");
-        int status = execute(launcher, args);
-        if (status != 0) {
-            launcher.getListener().error("Failed to docker logout");
+        if (loginTempDir != null) {
+            ArgumentListBuilder args = new ArgumentListBuilder("env",
+                                                               "HOME=" + loginTempDir
+                                                                       .getRemote(),
+                                                               "docker",
+                                                               "logout");
+            int status = execute(launcher, args);
+            if (status != 0) {
+                launcher.getListener().error("Failed to docker logout");
+            }
         }
     }
 
@@ -133,13 +139,14 @@ public class DockerState implements Serializable {
      * @throws InterruptedException
      */
     private static FilePath login(RemoteDockerBuildWrapper buildWrapper,
-                              AbstractDockerLauncher launcher,
-                              FilePath workspace) throws IOException, InterruptedException {
+                                  AbstractDockerLauncher launcher,
+                                  FilePath workspace) throws IOException, InterruptedException {
         if (buildWrapper.getCredentialsId() != null) {
             UsernamePasswordCredentials creds = buildWrapper.getCredentials();
             FilePath tempDir = WorkspaceList.tempDir(workspace);
             launcher.configureTempDir(tempDir);
-            ArgumentListBuilder args = new ArgumentListBuilder("docker", "login");
+            ArgumentListBuilder args = new ArgumentListBuilder("docker",
+                                                               "login");
             args.add("-u", creds.getUsername());
             args.add("-p");
             args.addMasked(creds.getPassword());
