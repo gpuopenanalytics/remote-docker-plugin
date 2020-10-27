@@ -47,36 +47,22 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
 
     private final String image;
     private final String maxRetries;
-    private final boolean pullImage;
+    private final boolean forcePull;
 
     @DataBoundConstructor
     public DockerImageConfiguration(List<ConfigItem> configItemList,
                                     List<VolumeConfiguration> volumes,
                                     String image,
-                                    ForcePull forcePull) {
+                                    boolean forcePull,
+                                    String maxRetries) {
         super(configItemList, volumes);
         this.image = image;
-        if (forcePull != null ) {
-            this.maxRetries = forcePull.maxRetries;
-            this.pullImage = true;
-        }
-        else {
-            this.maxRetries = "0";
-            this.pullImage = false;
-        }
+        this.forcePull = forcePull;
+        this.maxRetries = maxRetries;
     }
     
-    public static class ForcePull {
-        private String maxRetries;
-
-        @DataBoundConstructor
-        public ForcePull(String maxRetries) {
-            this.maxRetries = maxRetries;
-        }
-    }
-
     public boolean isForcePull() {
-        return pullImage;
+        return forcePull;
     }
 
     public String getImage() {
@@ -99,7 +85,7 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
         for (VolumeConfiguration volume : getVolumes()) {
             volume.validate();
         }
-	if (StringUtils.isEmpty(maxRetries)) {
+	if (StringUtils.isEmpty(maxRetries) && isForcePull()) {
             throw new Descriptor.FormException("Max Retries cannot be empty", "maxRetries");
 	}
 	if (!StringUtils.isNumeric(maxRetries)) {
