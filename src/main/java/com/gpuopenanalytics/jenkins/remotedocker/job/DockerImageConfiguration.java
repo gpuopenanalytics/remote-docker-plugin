@@ -46,24 +46,31 @@ import java.util.List;
 public class DockerImageConfiguration extends AbstractDockerConfiguration {
 
     private final String image;
+    private final String maxRetries;
     private final boolean forcePull;
 
     @DataBoundConstructor
     public DockerImageConfiguration(List<ConfigItem> configItemList,
                                     List<VolumeConfiguration> volumes,
                                     String image,
-                                    boolean forcePull) {
+                                    boolean forcePull,
+                                    String maxRetries) {
         super(configItemList, volumes);
         this.image = image;
         this.forcePull = forcePull;
+        this.maxRetries = maxRetries;
+    }
+    
+    public boolean isForcePull() {
+        return forcePull;
     }
 
     public String getImage() {
         return image;
     }
 
-    public boolean isForcePull() {
-        return forcePull;
+    public String getRetries() {
+        return maxRetries;
     }
 
     @Override
@@ -78,6 +85,12 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
         for (VolumeConfiguration volume : getVolumes()) {
             volume.validate();
         }
+	if (StringUtils.isEmpty(maxRetries) && isForcePull()) {
+            throw new Descriptor.FormException("Max Retries cannot be empty", "maxRetries");
+	}
+	if (!StringUtils.isNumeric(maxRetries)) {
+	    throw new Descriptor.FormException("Max Retries must be an integer", "maxRetries");
+	}
     }
 
     @Override
@@ -86,11 +99,29 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
         if (isForcePull()) {
             ArgumentListBuilder args = new ArgumentListBuilder();
             String image = Utils.resolveVariables(launcher, getImage());
+            String maxRetries = Utils.resolveVariables(launcher, getRetries());
             args.add("docker", "pull", image);
+            int numRetries = Integer.parseInt(maxRetries);
+            int retries = 0;
+            int status;
+
             Launcher.ProcStarter proc = launcher.executeCommand(args)
-                    .stderr(launcher.getListener().getLogger())
-                    .stdout(launcher.getListener());
-            int status = proc.join();
+                        .stderr(launcher.getListener().getLogger())
+                        .stdout(launcher.getListener());
+            status = proc.join();
+            
+            while (retries < numRetries && status != 0) {
+                retries += 1;
+                String message = "Docker pull failed, retry " + Integer.toString(retries) +
+                                 " of " + maxRetries + "...";
+                launcher.getListener().getLogger().println(message);
+
+                proc = launcher.executeCommand(args)
+                        .stderr(launcher.getListener().getLogger())
+                        .stdout(launcher.getListener());
+                status = proc.join();
+            }
+
             if (status != 0) {
                 throw new IOException("Could not pull image: " + image);
             }
