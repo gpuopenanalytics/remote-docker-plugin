@@ -26,11 +26,17 @@ package com.gpuopenanalytics.jenkins.remotedocker.config;
 
 import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import hudson.Extension;
+import hudson.Launcher;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 /**
  * Defines which GPU devices are visible in the container. Passes
@@ -64,27 +70,27 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
         }
     }
 
+    public boolean isMIG(AbstractDockerLauncher launcher) {
+        if (executeWithOutput(launcher.getInner(), "nvidia-smi", "-L", "|", "grep", "-i", "MIG") != "") {
+            return true;
+        }
+        return false;
+    }
+
+    public String getMIG(AbstractDockerLauncher launcher, String executor) {
+        String uuid = executeWithOutput(launcher.getInner(), "nvidia-smi", "-L", "|", "grep",
+                                        "-i", "MIG", "|", "sed", "-n", executor);
+        return uuid;
+    }
+
     @Override
     public void addCreateArgs(AbstractDockerLauncher launcher,
                               ArgumentListBuilder args) {
-        boolean isMIG() {
-            if (executeWithOutput(launcher.getInner(), "nvidia-smi", "-L", "|", "grep", "-i", "MIG") != "") {
-                 return true;
-            }
-            return false;
-        }
-
-        String getMIG(String executor) {
-            String uuid = executeWithOutput(launcher.getInner(), "nvidia-smi", "-L", "|", "grep", 
-                                            "-i", "MIG", "|", "sed", "-n", executor);
-            return uuid;
-        }
-
         String value;
         if ("executor".equals(getValue())) {
             String executorNum = launcher.getEnvironment().get("EXECUTOR_NUMBER");
-            if (isMIG()) {
-                value = getMIG(executorNum));
+            if (isMIG(launcher)) {
+                value = getMIG(launcher, executorNum);
             } else {
                 value = launcher.getEnvironment().get("EXECUTOR_NUMBER");
             }
@@ -115,6 +121,25 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
         @Override
         public String getDisplayName() {
             return "NVIDIA Device Visibility";
+        }
+    }
+
+    private String executeWithOutput(Launcher launcher, String... args) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            int status = launcher.launch()
+                    .cmds(args)
+                    .stdout(baos)
+                    .stderr(launcher.getListener().getLogger())
+                    .join();
+            if (status != 0) {
+                throw new RuntimeException(
+                        "Non-zero status " + status + ": " + Arrays
+                                .toString(args));
+            }
+            return baos.toString(StandardCharsets.UTF_8.name()).trim();
+        } catch (InterruptedException | IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }
