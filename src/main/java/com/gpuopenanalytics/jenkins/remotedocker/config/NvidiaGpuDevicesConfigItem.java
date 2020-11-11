@@ -67,9 +67,27 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
     @Override
     public void addCreateArgs(AbstractDockerLauncher launcher,
                               ArgumentListBuilder args) {
+        boolean isMIG() {
+            if (executeWithOutput(launcher.getInner(), "nvidia-smi", "-L", "|", "grep", "-i", "MIG") != "") {
+                 return true;
+            }
+            return false;
+        }
+
+        String getMIG(String executor) {
+            String uuid = executeWithOutput(launcher.getInner(), "nvidia-smi", "-L", "|", "grep", 
+                                            "-i", "MIG", "|", "sed", "-n", executor);
+            return uuid;
+        }
+
         String value;
         if ("executor".equals(getValue())) {
-            value = launcher.getEnvironment().get("EXECUTOR_NUMBER");
+            String executorNum = launcher.getEnvironment().get("EXECUTOR_NUMBER");
+            if (isMIG()) {
+                value = getMIG(executorNum));
+            } else {
+                value = launcher.getEnvironment().get("EXECUTOR_NUMBER");
+            }
         } else {
             value = getResolvedValue(launcher);
         }
