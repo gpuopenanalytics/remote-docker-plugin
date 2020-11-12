@@ -70,19 +70,6 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
         }
     }
 
-    public boolean isMIG(AbstractDockerLauncher launcher) {
-        if (executeWithOutput(launcher.getInner(), "nvidia-smi", "-L", "|", "grep", "-i", "MIG") != "") {
-            return true;
-        }
-        return false;
-    }
-
-    public String getMIG(AbstractDockerLauncher launcher, String executor) {
-        String uuid = executeWithOutput(launcher.getInner(), "nvidia-smi", "-L", "|", "grep",
-                                        "-i", "MIG", "|", "sed", "-n", executor);
-        return uuid;
-    }
-
     @Override
     public void addCreateArgs(AbstractDockerLauncher launcher,
                               ArgumentListBuilder args) {
@@ -141,5 +128,22 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
         } catch (InterruptedException | IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean isMIG(AbstractDockerLauncher launcher) {
+        String uuids = executeWithOutput(launcher.getInner(), "/bin/bash", "-c", "nvidia-smi -L | grep -i MIG");
+        if (uuids != "") {
+            return true;
+        }
+        return false;
+    }
+
+    private String getMIG(AbstractDockerLauncher launcher, String executor) {
+        // Executor 0 will be line 1, Executor 1 is line 2, etc
+        executor = String.valueOf((Integer.parseInt(executor)+1));
+        String command = "nvidia-smi -L | grep -i MIG | sed -n " + executor +
+                         "p | awk '{print $6}' | tr -d \\)";
+        String uuid = executeWithOutput(launcher.getInner(), "/bin/bash", "-c", command);
+        return uuid;
     }
 }
