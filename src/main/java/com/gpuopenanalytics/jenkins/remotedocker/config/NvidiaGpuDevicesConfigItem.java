@@ -37,6 +37,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Defines which GPU devices are visible in the container. Passes
@@ -76,8 +78,9 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
         String value;
         if ("executor".equals(getValue())) {
             String executorNum = launcher.getEnvironment().get("EXECUTOR_NUMBER");
-            if (isMIG(launcher)) {
-                value = getMIG(launcher, executorNum);
+            String nvidiasmiOutput = executeWithOutput(launcher.getInner(), "nvidia-smi", "-L"); 
+            if (isMIG(nvidiasmiOutput)) {
+                value = getMIG(nvidiasmiOutput, executorNum);
             } else {
                 value = executorNum;
             }
@@ -130,20 +133,24 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
         }
     }
 
-    private boolean isMIG(AbstractDockerLauncher launcher) {
-        String uuids = executeWithOutput(launcher.getInner(), "/bin/bash", "-c", "nvidia-smi -L | grep -i MIG");
-        if (uuids != "") {
+    private boolean isMIG(String output) {
+        Pattern pattern = Pattern.compile("(MIG-GPU-[a-f0-9\-\/]+)");
+        Matcher m = pattern.matcher(output);
+
+        if (m.find()) {
             return true;
         }
         return false;
     }
 
-    private String getMIG(AbstractDockerLauncher launcher, String executor) {
-        // Executor 0 will be line 1, Executor 1 is line 2, etc
-        executor = String.valueOf((Integer.parseInt(executor)+1));
-        String command = "nvidia-smi -L | grep -i MIG | sed -n " + executor +
-                         "p | awk '{print $6}' | tr -d \\)";
-        String uuid = executeWithOutput(launcher.getInner(), "/bin/bash", "-c", command);
-        return uuid;
+    private String getMIG(String output, String executor) {
+        List<String> uuids = new ArrayList<String>();
+        Pattern pattern = Pattern.compile("(MIG-GPU-[a-f0-9\-\/]+)");
+        Matcher m = pattern.matcher(output);
+
+        while (m.find()) {
+            uuids.add(m.group());
+        }
+        return uuids[executor];
     }
 }
