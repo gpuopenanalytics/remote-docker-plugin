@@ -79,7 +79,7 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
             if (isMIG(launcher)) {
                 value = getMIG(launcher, executorNum);
             } else {
-                value = launcher.getEnvironment().get("EXECUTOR_NUMBER");
+                value = executorNum;
             }
         } else {
             value = getResolvedValue(launcher);
