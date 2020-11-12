@@ -37,6 +37,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -78,7 +80,7 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
         String value;
         if ("executor".equals(getValue())) {
             String executorNum = launcher.getEnvironment().get("EXECUTOR_NUMBER");
-            String nvidiasmiOutput = executeWithOutput(launcher.getInner(), "nvidia-smi", "-L"); 
+            String nvidiasmiOutput = executeWithOutput(launcher.getInner(), "nvidia-smi", "-L");
             if (isMIG(nvidiasmiOutput)) {
                 value = getMIG(nvidiasmiOutput, executorNum);
             } else {
@@ -134,7 +136,7 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
     }
 
     private boolean isMIG(String output) {
-        Pattern pattern = Pattern.compile("(MIG-GPU-[a-f0-9\-\/]+)");
+        Pattern pattern = Pattern.compile("(MIG-GPU-[a-f0-9\\-\\/]+)");
         Matcher m = pattern.matcher(output);
 
         if (m.find()) {
@@ -144,13 +146,14 @@ public class NvidiaGpuDevicesConfigItem extends CustomConfigItem {
     }
 
     private String getMIG(String output, String executor) {
+        int executorNum = Integer.parseInt(executor);
         List<String> uuids = new ArrayList<String>();
-        Pattern pattern = Pattern.compile("(MIG-GPU-[a-f0-9\-\/]+)");
+        Pattern pattern = Pattern.compile("(MIG-GPU-[a-f0-9\\-\\/]+)");
         Matcher m = pattern.matcher(output);
 
         while (m.find()) {
             uuids.add(m.group());
         }
-        return uuids[executor];
+        return uuids.get(executorNum);
     }
 }
