@@ -24,6 +24,7 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.pipeline;
 
+import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.DockerState;
 import com.gpuopenanalytics.jenkins.remotedocker.job.DockerConfiguration;
@@ -34,6 +35,7 @@ import hudson.Proc;
 import hudson.model.Node;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Serializable;
 
@@ -47,17 +49,20 @@ public class DockerLauncherDecorator extends LauncherDecorator implements Serial
     private DockerConfiguration dockerConfiguration;
     private EnvVars environment;
     private String workspaceOverride;
+    private UsernamePasswordCredentials credentials;
 
     public DockerLauncherDecorator(boolean debug,
                                    DockerState dockerState,
                                    DockerConfiguration dockerConfiguration,
                                    EnvVars environment,
-                                   String workspaceOverride) {
+                                   String workspaceOverride,
+                                   @Nullable UsernamePasswordCredentials credentials) {
         this.debug = debug;
         this.dockerState = dockerState;
         this.dockerConfiguration = dockerConfiguration;
         this.environment = environment;
         this.workspaceOverride = workspaceOverride;
+        this.credentials=credentials;
     }
 
     @Nonnull

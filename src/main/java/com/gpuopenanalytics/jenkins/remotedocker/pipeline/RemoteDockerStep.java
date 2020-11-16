@@ -57,12 +57,16 @@ public class RemoteDockerStep extends Step {
     private List<SideDockerConfiguration> sideContainers;
     private String workspaceOverride;
     private Boolean removeContainers = true;
+    private String registryUrl;
+    private String credentialsId;
 
     @DataBoundConstructor
     public RemoteDockerStep(boolean debug,
                             AbstractDockerConfiguration main,
                             List<SideDockerConfiguration> sideContainers,
-                            String workspaceOverride) {
+                            String workspaceOverride,
+                            String registryUrl,
+                            String credentialsId) {
         this.debug = debug;
         this.main = main;
         this.sideContainers = ImmutableList.copyOf(
@@ -70,6 +74,8 @@ public class RemoteDockerStep extends Step {
                         .orElse(Collections.emptyList()));
         this.workspaceOverride = StringUtils.isNotEmpty(
                 workspaceOverride) ? workspaceOverride : null;
+        this.registryUrl = registryUrl;
+        this.credentialsId = credentialsId;
     }
 
     @Override
@@ -100,6 +106,14 @@ public class RemoteDockerStep extends Step {
 
     public String getWorkspaceOverride() {
         return workspaceOverride;
+    }
+
+    public String getRegistryUrl() {
+        return registryUrl;
+    }
+
+    public String getCredentialsId() {
+        return credentialsId;
     }
 
     @Extension

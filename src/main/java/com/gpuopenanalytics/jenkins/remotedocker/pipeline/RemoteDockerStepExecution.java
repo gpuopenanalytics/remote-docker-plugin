@@ -24,6 +24,8 @@
 
 package com.gpuopenanalytics.jenkins.remotedocker.pipeline;
 
+import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
+import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.DockerState;
 import com.gpuopenanalytics.jenkins.remotedocker.RemoteDockerBuildWrapper;
 import com.gpuopenanalytics.jenkins.remotedocker.SimpleDockerLauncher;
@@ -32,6 +34,7 @@ import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.LauncherDecorator;
+import hudson.Proc;
 import org.jenkinsci.plugins.workflow.steps.BodyExecution;
 import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
 import org.jenkinsci.plugins.workflow.steps.BodyInvoker;
@@ -68,12 +71,16 @@ public class RemoteDockerStepExecution extends StepExecution {
                 remoteDockerStep.isDebug(),
                 remoteDockerStep.getWorkspaceOverride(),
                 remoteDockerStep.getMain(),
-                remoteDockerStep.getSideContainers());
+                remoteDockerStep.getSideContainers(),
+                remoteDockerStep.getRegistryUrl(),
+                remoteDockerStep.getCredentialsId());
         buildWrapper.setRemoveContainers(remoteDockerStep.isRemoveContainers());
 
         Launcher launcher = getContext().get(Launcher.class);
         FilePath workspace = getContext().get(FilePath.class);
         EnvVars environment = getContext().get(EnvVars.class);
+        UsernamePasswordCredentials credentials = getContext().get(
+                UsernamePasswordCredentials.class);
 
         SimpleDockerLauncher simpleDockerLauncher = new SimpleDockerLauncher(
                 launcher, buildWrapper.isDebug(), environment, buildWrapper);
@@ -87,7 +94,8 @@ public class RemoteDockerStepExecution extends StepExecution {
                 dockerState,
                 remoteDockerStep.getMain(),
                 environment,
-                remoteDockerStep.getWorkspaceOverride());
+                remoteDockerStep.getWorkspaceOverride(),
+                credentials);
 
         LauncherDecorator launcherDecorator = BodyInvoker.mergeLauncherDecorators(
                 getContext().get(LauncherDecorator.class),
@@ -108,7 +116,7 @@ public class RemoteDockerStepExecution extends StepExecution {
         }
         if (dockerState != null) {
             Launcher launcher = getContext().get(Launcher.class);
-            dockerState.tearDown(launcher);
+            dockerState.tearDown(createLauncher(launcher, dockerState));
         }
 
     }
@@ -122,6 +130,27 @@ public class RemoteDockerStepExecution extends StepExecution {
     @Override
     public String getStatus() {
         return null;
+    }
+
+    private static AbstractDockerLauncher createLauncher(Launcher launcher,
+                                                         DockerState dockerState) {
+        return new AbstractDockerLauncher(launcher, dockerState) {
+            @Override
+            public Proc dockerExec(ProcStarter starter,
+                                   boolean addRunArgs) throws IOException {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EnvVars getEnvironment() {
+                return new EnvVars();
+            }
+
+            @Override
+            public boolean isDebug() {
+                return dockerState.isDebug();
+            }
+        };
     }
 
     /**
@@ -140,7 +169,7 @@ public class RemoteDockerStepExecution extends StepExecution {
         public void onSuccess(StepContext context, Object result) {
             try {
                 Launcher launcher = context.get(Launcher.class);
-                dockerState.tearDown(launcher);
+                dockerState.tearDown(createLauncher(launcher, dockerState));
                 context.onSuccess(result);
             } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
@@ -151,7 +180,7 @@ public class RemoteDockerStepExecution extends StepExecution {
         public void onFailure(StepContext context, Throwable t) {
             try {
                 Launcher launcher = context.get(Launcher.class);
-                dockerState.tearDown(launcher);
+                dockerState.tearDown(createLauncher(launcher, dockerState));
                 context.onFailure(t);
             } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
