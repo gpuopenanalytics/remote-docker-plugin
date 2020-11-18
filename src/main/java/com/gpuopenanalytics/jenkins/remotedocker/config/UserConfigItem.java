@@ -27,7 +27,6 @@ package com.gpuopenanalytics.jenkins.remotedocker.config;
 import com.gpuopenanalytics.jenkins.remotedocker.AbstractDockerLauncher;
 import com.gpuopenanalytics.jenkins.remotedocker.Utils;
 import hudson.Extension;
-import hudson.Launcher;
 import hudson.model.Descriptor;
 import hudson.util.ArgumentListBuilder;
 import net.sf.json.JSONObject;
@@ -131,29 +130,44 @@ public class UserConfigItem extends ConfigItem {
             String uid = Utils.resolveVariables(launcher, this.uid);
             String username = Utils.resolveVariables(launcher, this.username);
 
-            ArgumentListBuilder groupAddArgs = new ArgumentListBuilder();
-            groupAddArgs.add("groupadd", "-g", gid, username);
-            int status = launcher.dockerExec(groupAddArgs, false).join();
-            if (status != 0) {
-                throw new IOException("Failed to create group");
-            }
+            createUserAndGroup(launcher, username, uid, gid);
+        } else if (isCurrentUser()) {
+            String uid = executeWithOutput(launcher, "id", "-u");
+            String gid = executeWithOutput(launcher, "id", "-g");
+            String username = executeWithOutput(launcher, "id", "-un");
 
-            ArgumentListBuilder userAddArgs = new ArgumentListBuilder();
-            userAddArgs.add("useradd", "-g", gid, "-u", uid, username);
-            status = launcher.dockerExec(userAddArgs, false).join();
-            if (status != 0) {
-                throw new IOException("Failed to create user");
-            }
+            createUserAndGroup(launcher, username, uid, gid);
         }
     }
 
-    private String executeWithOutput(Launcher launcher, String... args) {
+    private void createUserAndGroup(AbstractDockerLauncher launcher,
+                                    String username,
+                                    String uid,
+                                    String gid) throws IOException, InterruptedException {
+        ArgumentListBuilder groupAddArgs = new ArgumentListBuilder();
+        groupAddArgs.add("groupadd", "-g", gid, username);
+        int status = launcher.dockerExec(groupAddArgs, false).join();
+        if (status != 0) {
+            throw new IOException("Failed to create group");
+        }
+
+        ArgumentListBuilder userAddArgs = new ArgumentListBuilder();
+        userAddArgs.add("useradd", "-g", gid, "-u", uid, username);
+        status = launcher.dockerExec(userAddArgs, false).join();
+        if (status != 0) {
+            throw new IOException("Failed to create user");
+        }
+    }
+
+    private String executeWithOutput(AbstractDockerLauncher launcher,
+                                     String... args) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            int status = launcher.launch()
+            int status = launcher.getInner().launch()
                     .cmds(args)
                     .stdout(baos)
                     .stderr(launcher.getListener().getLogger())
+                    .quiet(!launcher.isDebug())
                     .join();
             if (status != 0) {
                 throw new RuntimeException(
@@ -172,8 +186,8 @@ public class UserConfigItem extends ConfigItem {
         if (!isCurrentUser()) {
             args.add("--user", Utils.resolveVariables(launcher, username));
         } else {
-            String uid = executeWithOutput(launcher.getInner(), "id", "-u");
-            String gid = executeWithOutput(launcher.getInner(), "id", "-g");
+            String uid = executeWithOutput(launcher, "id", "-u");
+            String gid = executeWithOutput(launcher, "id", "-g");
             args.add("--user", uid + ":" + gid);
         }
     }
