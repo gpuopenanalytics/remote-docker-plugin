@@ -249,11 +249,14 @@ public class DockerState implements Serializable {
 
         //TODO Set name? Maybe with build.toString().replaceAll("^\\w", "_")
         ArgumentListBuilder args = new ArgumentListBuilder()
-                .add("run", "-t", "-d")
-                //Add bridge network for internet access
-                .add("--network", "bridge");
-        //Add inter-container network if needed
-        network.ifPresent(net -> net.addArgs(args));
+                .add("run", "-t", "-d");
+        if (network.isPresent()) {
+            //Add inter-container network
+            network.get().addArgs(args);
+        } else {
+            //Add bridge network for internet access
+            args.add("--network", "bridge");
+        }
 
         if (isMain) {
             String secondaryTempPath = WorkspaceList.tempDir(workspace)
