@@ -52,7 +52,9 @@ public class DockerNetwork {
      */
     public static DockerNetwork create(AbstractDockerLauncher launcher) throws IOException, InterruptedException {
         ArgumentListBuilder args = new ArgumentListBuilder();
-        args.add("docker", "network", "create", UUID.randomUUID().toString());
+        args.add("docker", "network", "create", "-d", "bridge",
+                 UUID.randomUUID().toString());
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int status = launcher.executeCommand(args)
                 .stdout(baos)
