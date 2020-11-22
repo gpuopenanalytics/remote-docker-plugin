@@ -12,7 +12,7 @@
 
     <groupId>com.gpuopenanalytics.jenkins</groupId>
     <artifactId>remote-docker-plugin</artifactId>
-    <version>0.0.8-SNAPSHOT</version>
+    <version>0.0.8</version>
     <packaging>hpi</packaging>
 
     <name>Remote Docker Build</name>
