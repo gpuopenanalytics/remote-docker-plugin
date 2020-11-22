@@ -60,7 +60,7 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
         this.forcePull = forcePull;
         this.maxRetries = maxRetries;
     }
-    
+
     public boolean isForcePull() {
         return forcePull;
     }
@@ -69,8 +69,13 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
         return image;
     }
 
-    public String getRetries() {
-        return maxRetries;
+    public @Nonnull String getRetries() {
+        if(StringUtils.isEmpty(maxRetries)) {
+            //Default to 1
+            return "1";
+        } else {
+            return maxRetries;
+        }
     }
 
     @Override
@@ -109,7 +114,7 @@ public class DockerImageConfiguration extends AbstractDockerConfiguration {
                         .stderr(launcher.getListener().getLogger())
                         .stdout(launcher.getListener());
             status = proc.join();
-            
+
             while (retries < numRetries && status != 0) {
                 retries += 1;
                 String message = "Docker pull failed, retry " + Integer.toString(retries) +
