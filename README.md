@@ -1,5 +1,11 @@
 # Remote Docker Plugin
 
+## No longer maintained
+
+This plugin is no longer maintained.
+
+## Description
+
 This a Jenkins plugin for delegating builds into a docker container on Jenkins agents.
 
 The plugin also features first-class support for [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) exposing the most common configuration options. This plugin makes it easy to allocate GPU devices using the 'executor' device visibility option. 
